@@ -51,87 +51,33 @@ namespace Contract2512
         }
 
         /// <summary>
-        /// Обрабатывает события Squirrel через рефлексию
+        /// Обрабатывает события Squirrel через Update.exe
         /// </summary>
         private void HandleSquirrelEvents()
         {
             try
             {
+                // Проверяем, запущено ли приложение из Squirrel установки
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
-                var squirrelDll = Path.Combine(appDir, "Clowd.Squirrel.dll");
-                
-                if (!File.Exists(squirrelDll))
+                var parentDir = Directory.GetParent(appDir)?.FullName;
+                if (parentDir == null) return;
+
+                var updateExe = Path.Combine(parentDir, "Update.exe");
+                if (!File.Exists(updateExe))
                 {
-                    Debug.WriteLine("⚠️ Clowd.Squirrel.dll не найден, пропускаем обработку Squirrel событий");
+                    Debug.WriteLine("⚠️ Update.exe не найден, пропускаем обработку Squirrel событий");
                     return;
                 }
 
-                var assembly = Assembly.LoadFrom(squirrelDll);
-                var squirrelAwareAppType = assembly.GetType("Clowd.Squirrel.SquirrelAwareApp");
-                
-                if (squirrelAwareAppType == null)
-                {
-                    Debug.WriteLine("⚠️ SquirrelAwareApp не найден");
-                    return;
-                }
+                Debug.WriteLine("✅ Приложение запущено из Squirrel установки");
 
-                var handleEventsMethod = squirrelAwareAppType.GetMethod("HandleEvents", BindingFlags.Public | BindingFlags.Static);
-                
-                if (handleEventsMethod == null)
-                {
-                    Debug.WriteLine("⚠️ HandleEvents не найден");
-                    return;
-                }
-
-                // Создаем делегаты для событий
-                var actionType = typeof(Action<>).MakeGenericType(assembly.GetType("NuGet.Versioning.SemanticVersion")!);
-                
-                Delegate createShortcut = Delegate.CreateDelegate(actionType, this, GetType().GetMethod(nameof(CreateShortcut), BindingFlags.NonPublic | BindingFlags.Instance)!);
-                Delegate removeShortcut = Delegate.CreateDelegate(actionType, this, GetType().GetMethod(nameof(RemoveShortcut), BindingFlags.NonPublic | BindingFlags.Instance)!);
-
-                handleEventsMethod.Invoke(null, new object?[] { createShortcut, createShortcut, removeShortcut, null, null });
-                
-                Debug.WriteLine("✅ Squirrel события обработаны");
+                // Squirrel автоматически обрабатывает события через Update.exe
+                // Нам не нужно вручную вызывать HandleEvents
+                // Update.exe сам создает/удаляет ярлыки при установке/удалении
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ Ошибка обработки Squirrel событий: {ex.Message}");
-            }
-        }
-
-        private void CreateShortcut(object version)
-        {
-            try
-            {
-                var appDir = AppDomain.CurrentDomain.BaseDirectory;
-                var squirrelDll = Path.Combine(appDir, "Clowd.Squirrel.dll");
-                var assembly = Assembly.LoadFrom(squirrelDll);
-                var squirrelAwareAppType = assembly.GetType("Clowd.Squirrel.SquirrelAwareApp");
-                var method = squirrelAwareAppType?.GetMethod("CreateShortcutForThisExe", BindingFlags.Public | BindingFlags.Static);
-                method?.Invoke(null, null);
-                Debug.WriteLine("✅ Ярлык создан");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Ошибка создания ярлыка: {ex.Message}");
-            }
-        }
-
-        private void RemoveShortcut(object version)
-        {
-            try
-            {
-                var appDir = AppDomain.CurrentDomain.BaseDirectory;
-                var squirrelDll = Path.Combine(appDir, "Clowd.Squirrel.dll");
-                var assembly = Assembly.LoadFrom(squirrelDll);
-                var squirrelAwareAppType = assembly.GetType("Clowd.Squirrel.SquirrelAwareApp");
-                var method = squirrelAwareAppType?.GetMethod("RemoveShortcutForThisExe", BindingFlags.Public | BindingFlags.Static);
-                method?.Invoke(null, null);
-                Debug.WriteLine("✅ Ярлык удален");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Ошибка удаления ярлыка: {ex.Message}");
             }
         }
 
@@ -199,21 +145,28 @@ namespace Contract2512
                 // Читаем настройки GitHub из .env
                 var githubOwner = EnvConfigService.Get("GITHUB_OWNER") ?? "Fotters05";
                 var githubRepo = EnvConfigService.Get("GITHUB_REPO") ?? "contracts2512";
+                var githubToken = EnvConfigService.Get("GITHUB_TOKEN");
                 
-                // URL для Squirrel - указываем на папку с релизами на GitHub
-                // Squirrel будет искать файл RELEASES по этому URL
-                string updateUrl = $"https://github.com/{githubOwner}/{githubRepo}/releases/latest/download";
+                // Для приватных репозиториев нужно использовать GitHub API с токеном
+                // Формат: https://TOKEN@github.com/owner/repo/releases/latest/download
+                string updateUrl;
+                if (!string.IsNullOrEmpty(githubToken))
+                {
+                    // Используем токен для доступа к приватному репозиторию
+                    updateUrl = $"https://{githubToken}@github.com/{githubOwner}/{githubRepo}/releases/latest/download";
+                    System.Diagnostics.Debug.WriteLine($"🔍 Проверка обновлений (приватный репозиторий)");
+                }
+                else
+                {
+                    // Публичный репозиторий
+                    updateUrl = $"https://github.com/{githubOwner}/{githubRepo}/releases/latest/download";
+                    System.Diagnostics.Debug.WriteLine($"🔍 Проверка обновлений (публичный репозиторий)");
+                }
                 
-                System.Diagnostics.Debug.WriteLine($"🔍 Проверка обновлений по URL: {updateUrl}");
-                
-                // ВРЕМЕННО: показываем MessageBox для отладки
-                MessageBox.Show($"Начинаем проверку обновлений...\nURL: {updateUrl}", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Diagnostics.Debug.WriteLine($"🔍 URL: {updateUrl.Replace(githubToken ?? "", "***")}");
                 
                 var updateService = new AutoUpdateService(updateUrl);
                 var updateInfo = await updateService.CheckForUpdatesAsync();
-
-                // ВРЕМЕННО: показываем результат
-                MessageBox.Show($"Результат проверки:\nHasUpdate: {updateInfo.HasUpdate}\nVersion: {updateInfo.Version}\nError: {updateInfo.Error}", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 if (updateInfo.HasUpdate)
                 {
@@ -239,9 +192,6 @@ namespace Contract2512
             {
                 // Ошибки обновления не должны ломать приложение
                 System.Diagnostics.Debug.WriteLine($"❌ Ошибка проверки обновлений: {ex.Message}");
-                
-                // ВРЕМЕННО: показываем ошибку
-                MessageBox.Show($"Ошибка проверки обновлений:\n{ex.Message}\n\nStack:\n{ex.StackTrace}", "Debug Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

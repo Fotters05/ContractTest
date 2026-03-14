@@ -1,69 +1,24 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Contract2512.Services
 {
     /// <summary>
-    /// Сервис автоматического обновления приложения через Squirrel (с динамической загрузкой)
+    /// Сервис автоматического обновления приложения через Update.exe (Squirrel)
     /// </summary>
     public class AutoUpdateService
     {
         private readonly string _updateUrl;
         private readonly string _currentVersion;
-        private static Assembly? _squirrelAssembly;
 
         public AutoUpdateService(string updateUrl)
         {
             _updateUrl = updateUrl;
             _currentVersion = GetCurrentVersion();
-        }
-
-        /// <summary>
-        /// Загружает Squirrel assembly динамически
-        /// </summary>
-        private static Assembly? LoadSquirrelAssembly()
-        {
-            if (_squirrelAssembly != null) return _squirrelAssembly;
-
-            try
-            {
-                // Ищем Clowd.Squirrel.dll в папке приложения
-                var appDir = AppDomain.CurrentDomain.BaseDirectory;
-                var squirrelDll = Path.Combine(appDir, "Clowd.Squirrel.dll");
-
-                Debug.WriteLine($"🔍 Ищем Squirrel в: {appDir}");
-                Debug.WriteLine($"📁 Полный путь: {squirrelDll}");
-                Debug.WriteLine($"✓ Файл существует: {File.Exists(squirrelDll)}");
-
-                if (File.Exists(squirrelDll))
-                {
-                    Debug.WriteLine($"✅ Загружаем Squirrel из: {squirrelDll}");
-                    _squirrelAssembly = Assembly.LoadFrom(squirrelDll);
-                    Debug.WriteLine($"✅ Squirrel загружен: {_squirrelAssembly.FullName}");
-                    return _squirrelAssembly;
-                }
-
-                Debug.WriteLine($"⚠️ Clowd.Squirrel.dll не найден в: {appDir}");
-                
-                // Показываем список файлов в папке
-                var files = Directory.GetFiles(appDir, "*.dll");
-                Debug.WriteLine($"📂 DLL файлы в папке ({files.Length}):");
-                foreach (var file in files.Take(10))
-                {
-                    Debug.WriteLine($"  - {Path.GetFileName(file)}");
-                }
-                
-                return null;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"❌ Ошибка загрузки Squirrel: {ex.Message}");
-                return null;
-            }
         }
 
         /// <summary>
@@ -77,7 +32,44 @@ namespace Contract2512.Services
         }
 
         /// <summary>
-        /// Проверяет наличие обновлений через Squirrel
+        /// Находит Update.exe в установленном приложении
+        /// </summary>
+        private string? FindUpdateExe()
+        {
+            try
+            {
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                Debug.WriteLine($"📂 Папка приложения: {appDir}");
+
+                // Update.exe находится на уровень выше папки app-X.X.X
+                var parentDir = Directory.GetParent(appDir)?.FullName;
+                if (parentDir == null)
+                {
+                    Debug.WriteLine($"⚠️ Не удалось получить родительскую папку");
+                    return null;
+                }
+
+                var updateExe = Path.Combine(parentDir, "Update.exe");
+                Debug.WriteLine($"🔍 Ищем Update.exe: {updateExe}");
+                Debug.WriteLine($"✓ Файл существует: {File.Exists(updateExe)}");
+
+                if (File.Exists(updateExe))
+                {
+                    return updateExe;
+                }
+
+                Debug.WriteLine($"⚠️ Update.exe не найден, приложение запущено не из Squirrel установки");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Ошибка поиска Update.exe: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Проверяет наличие обновлений через Update.exe
         /// </summary>
         public async Task<UpdateInfo> CheckForUpdatesAsync()
         {
@@ -85,180 +77,172 @@ namespace Contract2512.Services
             {
                 Debug.WriteLine($"🔍 Проверка обновлений по URL: {_updateUrl}");
                 Debug.WriteLine($"📌 Текущая версия: {_currentVersion}");
-                Debug.WriteLine($"📂 Папка приложения: {AppDomain.CurrentDomain.BaseDirectory}");
 
-                var assembly = LoadSquirrelAssembly();
-                if (assembly == null)
+                var updateExe = FindUpdateExe();
+                if (updateExe == null)
                 {
-                    Debug.WriteLine($"⚠️ Squirrel не загружен, автообновление недоступно");
+                    Debug.WriteLine($"⚠️ Update.exe не найден, автообновление недоступно");
                     Debug.WriteLine($"ℹ️ Это нормально для запуска из Visual Studio");
                     return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
                 }
 
-                Debug.WriteLine($"✅ Squirrel assembly загружен: {assembly.FullName}");
+                Debug.WriteLine($"✅ Update.exe найден: {updateExe}");
+                Debug.WriteLine($"🔄 Запускаем проверку обновлений...");
 
-                // Создаем UpdateManager через рефлексию
-                var updateManagerType = assembly.GetType("Clowd.Squirrel.UpdateManager");
-                if (updateManagerType == null)
+                // Запускаем Update.exe --checkForUpdate --url <updateUrl>
+                var startInfo = new ProcessStartInfo
                 {
-                    Debug.WriteLine($"❌ UpdateManager не найден");
-                    return new UpdateInfo { HasUpdate = false, Error = "UpdateManager not found", CurrentVersion = _currentVersion };
-                }
+                    FileName = updateExe,
+                    Arguments = $"--checkForUpdate --url \"{_updateUrl}\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
 
-                Debug.WriteLine($"✅ UpdateManager найден");
-                Debug.WriteLine($"🌐 Создаем UpdateManager с URL: {_updateUrl}");
+                using var process = new Process { StartInfo = startInfo };
+                var output = "";
+                var error = "";
 
-                var updateManager = Activator.CreateInstance(updateManagerType, _updateUrl);
-                if (updateManager == null)
+                process.OutputDataReceived += (sender, e) =>
                 {
-                    Debug.WriteLine($"❌ Не удалось создать UpdateManager");
-                    return new UpdateInfo { HasUpdate = false, Error = "Failed to create UpdateManager", CurrentVersion = _currentVersion };
-                }
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        output += e.Data + "\n";
+                        Debug.WriteLine($"📤 Update.exe: {e.Data}");
+                    }
+                };
 
-                Debug.WriteLine($"✅ UpdateManager создан");
-
-                // Вызываем CheckForUpdate
-                var checkMethod = updateManagerType.GetMethod("CheckForUpdate");
-                if (checkMethod == null)
+                process.ErrorDataReceived += (sender, e) =>
                 {
-                    Debug.WriteLine($"❌ Метод CheckForUpdate не найден");
-                    return new UpdateInfo { HasUpdate = false, Error = "CheckForUpdate method not found", CurrentVersion = _currentVersion };
-                }
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        error += e.Data + "\n";
+                        Debug.WriteLine($"⚠️ Update.exe error: {e.Data}");
+                    }
+                };
 
-                Debug.WriteLine($"🔄 Вызываем CheckForUpdate...");
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
 
-                var updateInfoTask = checkMethod.Invoke(updateManager, null) as Task;
-                if (updateInfoTask == null)
+                await process.WaitForExitAsync();
+
+                Debug.WriteLine($"✅ Update.exe завершен с кодом: {process.ExitCode}");
+
+                // ExitCode 0 = обновление доступно
+                // ExitCode 1 = обновлений нет
+                // ExitCode 2+ = ошибка
+                if (process.ExitCode == 0)
                 {
-                    Debug.WriteLine($"❌ CheckForUpdate не вернул Task");
-                    return new UpdateInfo { HasUpdate = false, Error = "CheckForUpdate failed", CurrentVersion = _currentVersion };
-                }
+                    Debug.WriteLine($"✅ Найдено обновление!");
 
-                Debug.WriteLine($"⏳ Ожидаем результат CheckForUpdate...");
-                await updateInfoTask.ConfigureAwait(false);
-                Debug.WriteLine($"✅ CheckForUpdate завершен");
+                    // Пытаемся извлечь версию из вывода
+                    var versionMatch = Regex.Match(output, @"(\d+\.\d+\.\d+)");
+                    var newVersion = versionMatch.Success ? versionMatch.Groups[1].Value : "новая версия";
 
-                // Получаем результат
-                var resultProperty = updateInfoTask.GetType().GetProperty("Result");
-                var updateInfoResult = resultProperty?.GetValue(updateInfoTask);
-
-                if (updateInfoResult == null)
-                {
-                    Debug.WriteLine($"ℹ️ Обновлений нет (updateInfoResult == null)");
-                    return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
-                }
-
-                Debug.WriteLine($"✅ Получен результат updateInfo");
-
-                // Проверяем ReleasesToApply
-                var releasesToApplyProperty = updateInfoResult.GetType().GetProperty("ReleasesToApply");
-                var releasesToApply = releasesToApplyProperty?.GetValue(updateInfoResult) as System.Collections.IList;
-
-                Debug.WriteLine($"📦 ReleasesToApply count: {releasesToApply?.Count ?? 0}");
-
-                if (releasesToApply != null && releasesToApply.Count > 0)
-                {
-                    Debug.WriteLine($"✅ Найдено обновлений: {releasesToApply.Count}");
-
-                    // Получаем версию
-                    var futureReleaseProperty = updateInfoResult.GetType().GetProperty("FutureReleaseEntry");
-                    var futureRelease = futureReleaseProperty?.GetValue(updateInfoResult);
-                    var versionProperty = futureRelease?.GetType().GetProperty("Version");
-                    var version = versionProperty?.GetValue(futureRelease);
-
-                    Debug.WriteLine($"🎯 Новая версия: {version}");
+                    Debug.WriteLine($"🎯 Новая версия: {newVersion}");
 
                     return new UpdateInfo
                     {
                         HasUpdate = true,
-                        Version = version?.ToString() ?? "новая версия",
+                        Version = newVersion,
                         ReleaseNotes = "Доступна новая версия приложения",
                         CurrentVersion = _currentVersion
                     };
                 }
-
-                Debug.WriteLine($"ℹ️ Обновлений нет (ReleasesToApply пуст)");
-                return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
+                else if (process.ExitCode == 1)
+                {
+                    Debug.WriteLine($"ℹ️ Обновлений нет");
+                    return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
+                }
+                else
+                {
+                    Debug.WriteLine($"❌ Ошибка проверки обновлений: {error}");
+                    return new UpdateInfo { HasUpdate = false, Error = error, CurrentVersion = _currentVersion };
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ Ошибка проверки обновлений: {ex.Message}");
                 Debug.WriteLine($"Stack trace: {ex.StackTrace}");
-                if (ex.InnerException != null)
-                {
-                    Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
-                    Debug.WriteLine($"Inner stack trace: {ex.InnerException.StackTrace}");
-                }
                 return new UpdateInfo { HasUpdate = false, Error = ex.Message, CurrentVersion = _currentVersion };
             }
         }
 
         /// <summary>
-        /// Скачивает и устанавливает обновление через Squirrel
+        /// Скачивает и устанавливает обновление через Update.exe
         /// </summary>
         public async Task<bool> DownloadAndInstallUpdateAsync(IProgress<int>? progress = null)
         {
             try
             {
-                Debug.WriteLine($"📥 Начало загрузки обновления...");
+                Debug.WriteLine($"📥 Начало загрузки и установки обновления...");
 
-                var assembly = LoadSquirrelAssembly();
-                if (assembly == null) return false;
-
-                var updateManagerType = assembly.GetType("Clowd.Squirrel.UpdateManager");
-                if (updateManagerType == null) return false;
-
-                var updateManager = Activator.CreateInstance(updateManagerType, _updateUrl);
-                if (updateManager == null) return false;
-
-                // CheckForUpdate
-                var checkMethod = updateManagerType.GetMethod("CheckForUpdate");
-                var updateInfoTask = checkMethod?.Invoke(updateManager, null) as Task;
-                if (updateInfoTask == null) return false;
-
-                await updateInfoTask.ConfigureAwait(false);
-                var resultProperty = updateInfoTask.GetType().GetProperty("Result");
-                var updateInfoResult = resultProperty?.GetValue(updateInfoTask);
-                if (updateInfoResult == null) return false;
-
-                var releasesToApplyProperty = updateInfoResult.GetType().GetProperty("ReleasesToApply");
-                var releasesToApply = releasesToApplyProperty?.GetValue(updateInfoResult) as System.Collections.IList;
-
-                if (releasesToApply == null || releasesToApply.Count == 0)
+                var updateExe = FindUpdateExe();
+                if (updateExe == null)
                 {
-                    Debug.WriteLine($"ℹ️ Нет релизов для применения");
+                    Debug.WriteLine($"❌ Update.exe не найден");
                     return false;
                 }
 
-                Debug.WriteLine($"📦 Найдено релизов: {releasesToApply.Count}");
+                Debug.WriteLine($"✅ Update.exe найден: {updateExe}");
+                Debug.WriteLine($"🔄 Запускаем установку обновления...");
 
-                // DownloadReleases
-                var downloadMethod = updateManagerType.GetMethod("DownloadReleases");
-                if (downloadMethod != null)
+                // Запускаем Update.exe --update <updateUrl>
+                var startInfo = new ProcessStartInfo
                 {
-                    Action<int>? progressAction = progress != null ? p => progress.Report(p) : null;
-                    var downloadTask = downloadMethod.Invoke(updateManager, new object[] { releasesToApply, progressAction! }) as Task;
-                    if (downloadTask != null)
-                    {
-                        await downloadTask.ConfigureAwait(false);
-                        Debug.WriteLine($"✅ Загрузка завершена");
-                    }
-                }
+                    FileName = updateExe,
+                    Arguments = $"--update \"{_updateUrl}\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
 
-                // ApplyReleases
-                var applyMethod = updateManagerType.GetMethod("ApplyReleases");
-                if (applyMethod != null)
+                using var process = new Process { StartInfo = startInfo };
+
+                process.OutputDataReceived += (sender, e) =>
                 {
-                    var applyTask = applyMethod.Invoke(updateManager, new object[] { updateInfoResult }) as Task;
-                    if (applyTask != null)
+                    if (!string.IsNullOrEmpty(e.Data))
                     {
-                        await applyTask.ConfigureAwait(false);
-                        Debug.WriteLine($"✅ Обновление установлено!");
-                        return true;
+                        Debug.WriteLine($"📤 Update.exe: {e.Data}");
+                        
+                        // Пытаемся извлечь прогресс из вывода
+                        var progressMatch = Regex.Match(e.Data, @"(\d+)%");
+                        if (progressMatch.Success && int.TryParse(progressMatch.Groups[1].Value, out var percent))
+                        {
+                            progress?.Report(percent);
+                        }
                     }
-                }
+                };
 
-                return false;
+                process.ErrorDataReceived += (sender, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        Debug.WriteLine($"⚠️ Update.exe error: {e.Data}");
+                    }
+                };
+
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                await process.WaitForExitAsync();
+
+                Debug.WriteLine($"✅ Update.exe завершен с кодом: {process.ExitCode}");
+
+                if (process.ExitCode == 0)
+                {
+                    Debug.WriteLine($"✅ Обновление успешно установлено!");
+                    return true;
+                }
+                else
+                {
+                    Debug.WriteLine($"❌ Ошибка установки обновления, код: {process.ExitCode}");
+                    return false;
+                }
             }
             catch (Exception ex)
             {
@@ -276,16 +260,32 @@ namespace Contract2512.Services
             {
                 Debug.WriteLine($"🔄 Перезапуск приложения...");
 
-                var assembly = LoadSquirrelAssembly();
-                if (assembly == null) return;
+                // Получаем путь к Update.exe
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var parentDir = Directory.GetParent(appDir)?.FullName;
+                if (parentDir == null) return;
 
-                var updateManagerType = assembly.GetType("Clowd.Squirrel.UpdateManager");
-                var restartMethod = updateManagerType?.GetMethod("RestartApp", BindingFlags.Public | BindingFlags.Static);
-
-                if (restartMethod != null)
+                var updateExe = Path.Combine(parentDir, "Update.exe");
+                if (!File.Exists(updateExe))
                 {
-                    restartMethod.Invoke(null, null);
+                    Debug.WriteLine($"⚠️ Update.exe не найден для перезапуска");
+                    return;
                 }
+
+                // Запускаем Update.exe --processStart Contract2512.exe
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = updateExe,
+                    Arguments = "--processStart Contract2512.exe",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                Process.Start(startInfo);
+                Debug.WriteLine($"✅ Команда перезапуска отправлена");
+
+                // Закрываем текущее приложение
+                System.Windows.Application.Current.Shutdown();
             }
             catch (Exception ex)
             {
