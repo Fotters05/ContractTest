@@ -1,10 +1,11 @@
 using System;
 using System.Windows;
+using System.Windows.Input;
 using Contract2512.Services;
 
 namespace Contract2512.Views
 {
-    public partial class UpdateWindow : Window
+    public partial class UpdateWindow : Wpf.Ui.Controls.FluentWindow
     {
         private readonly UpdateInfo _updateInfo;
         private readonly AutoUpdateService _updateService;
@@ -18,8 +19,15 @@ namespace Contract2512.Views
 
             // Заполняем информацию
             VersionText.Text = $"Доступна версия: {updateInfo.Version}";
-            DateText.Text = $"Текущая версия: {updateInfo.CurrentVersion}";
             ReleaseNotesText.Text = updateInfo.ReleaseNotes;
+        }
+
+        private void TitleBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                DragMove();
+            }
         }
 
         private async void UpdateButton_Click(object sender, RoutedEventArgs e)

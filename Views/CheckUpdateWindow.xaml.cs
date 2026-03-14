@@ -35,19 +35,6 @@ namespace Contract2512.Views
                 
                 _updateInfo = await _updateService.CheckForUpdatesAsync();
 
-                // ДИАГНОСТИКА: Показываем всю информацию
-                var diagnosticInfo = $"Текущая версия: {_updateInfo.CurrentVersion}\n";
-                diagnosticInfo += $"HasUpdate: {_updateInfo.HasUpdate}\n";
-                diagnosticInfo += $"Новая версия: {_updateInfo.Version}\n";
-                diagnosticInfo += $"Ошибка: {_updateInfo.Error}\n\n";
-                diagnosticInfo += $"Лог сохранен в:\n{UpdateLogger.GetLogFilePath()}";
-                
-                System.Diagnostics.Debug.WriteLine($"=== ДИАГНОСТИКА ОБНОВЛЕНИЯ ===");
-                System.Diagnostics.Debug.WriteLine(diagnosticInfo);
-                
-                // Показываем MessageBox с диагностикой
-                MessageBox.Show(diagnosticInfo, "Диагностика обновления", MessageBoxButton.OK, MessageBoxImage.Information);
-
                 if (_updateInfo.HasUpdate)
                 {
                     // Обновление найдено
@@ -101,8 +88,6 @@ namespace Contract2512.Views
                 DetailsTextBlock.Text = $"Произошла ошибка: {ex.Message}";
                 ProgressBar.IsIndeterminate = false;
                 ProgressBar.Visibility = Visibility.Collapsed;
-                
-                MessageBox.Show($"Исключение:\n{ex.Message}\n\nStack:\n{ex.StackTrace}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 
                 await Task.Delay(3000);
                 DialogResult = false;
