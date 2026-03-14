@@ -39,31 +39,43 @@ namespace Contract2512.Services
             try
             {
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
-                Debug.WriteLine($"📂 Папка приложения: {appDir}");
+                UpdateLogger.Log($"📂 Папка приложения: {appDir}");
 
                 // Update.exe находится на уровень выше папки app-X.X.X
                 var parentDir = Directory.GetParent(appDir)?.FullName;
                 if (parentDir == null)
                 {
-                    Debug.WriteLine($"⚠️ Не удалось получить родительскую папку");
+                    UpdateLogger.Log($"⚠️ Не удалось получить родительскую папку");
                     return null;
                 }
 
+                UpdateLogger.Log($"📂 Родительская папка: {parentDir}");
+
                 var updateExe = Path.Combine(parentDir, "Update.exe");
-                Debug.WriteLine($"🔍 Ищем Update.exe: {updateExe}");
-                Debug.WriteLine($"✓ Файл существует: {File.Exists(updateExe)}");
+                UpdateLogger.Log($"🔍 Ищем Update.exe по пути: {updateExe}");
+                UpdateLogger.Log($"✓ Файл существует: {File.Exists(updateExe)}");
+
+                // Показываем содержимое родительской папки
+                if (Directory.Exists(parentDir))
+                {
+                    UpdateLogger.Log($"📁 Содержимое папки {parentDir}:");
+                    foreach (var file in Directory.GetFiles(parentDir))
+                    {
+                        UpdateLogger.Log($"  - {Path.GetFileName(file)}");
+                    }
+                }
 
                 if (File.Exists(updateExe))
                 {
                     return updateExe;
                 }
 
-                Debug.WriteLine($"⚠️ Update.exe не найден, приложение запущено не из Squirrel установки");
+                UpdateLogger.Log($"⚠️ Update.exe не найден, приложение запущено не из Squirrel установки");
                 return null;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Ошибка поиска Update.exe: {ex.Message}");
+                UpdateLogger.Log($"❌ Ошибка поиска Update.exe: {ex.Message}");
                 return null;
             }
         }
