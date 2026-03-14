@@ -315,7 +315,7 @@ namespace Contract2512.Services
             {
                 Debug.WriteLine($"🔄 Перезапуск приложения...");
 
-                // Получаем путь к главному exe в родительской папке
+                // Получаем путь к Update.exe
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
                 var parentDir = Directory.GetParent(appDir)?.FullName;
                 if (parentDir == null)
@@ -324,30 +324,31 @@ namespace Contract2512.Services
                     return;
                 }
 
-                var mainExe = Path.Combine(parentDir, "Contract2512.exe");
-                if (!File.Exists(mainExe))
+                var updateExe = Path.Combine(parentDir, "Update.exe");
+                if (!File.Exists(updateExe))
                 {
-                    Debug.WriteLine($"⚠️ Главный exe не найден: {mainExe}");
+                    Debug.WriteLine($"⚠️ Update.exe не найден: {updateExe}");
                     return;
                 }
 
-                Debug.WriteLine($"✅ Запускаем: {mainExe}");
+                Debug.WriteLine($"✅ Запускаем через Update.exe: {updateExe}");
 
-                // Запускаем новый экземпляр приложения
+                // Используем Update.exe --processStart для корректного перезапуска
+                // Update.exe сам дождется закрытия текущего процесса и запустит новую версию
                 var startInfo = new ProcessStartInfo
                 {
-                    FileName = mainExe,
-                    UseShellExecute = true,
+                    FileName = updateExe,
+                    Arguments = "--processStart Contract2512.exe",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
                     WorkingDirectory = parentDir
                 };
 
                 Process.Start(startInfo);
-                Debug.WriteLine($"✅ Новый экземпляр запущен");
-
-                // Даем время на запуск нового процесса
-                System.Threading.Thread.Sleep(500);
+                Debug.WriteLine($"✅ Команда перезапуска отправлена");
 
                 // Закрываем текущее приложение
+                // Update.exe автоматически запустит новую версию после закрытия
                 Environment.Exit(0);
             }
             catch (Exception ex)
@@ -357,7 +358,7 @@ namespace Contract2512.Services
                 // Fallback: просто закрываем приложение
                 try
                 {
-                    System.Windows.Application.Current.Shutdown();
+                    Environment.Exit(0);
                 }
                 catch { }
             }
