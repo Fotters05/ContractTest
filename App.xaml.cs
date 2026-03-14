@@ -46,8 +46,12 @@ namespace Contract2512
                 }
             }
 
-            // Проверяем обновления (в фоновом режиме, не блокируем запуск)
-            _ = CheckForUpdatesAsync();
+            // Проверяем обновления и показываем главное окно
+            await CheckForUpdatesAsync();
+            
+            // Открываем главное окно приложения
+            var mainWindow = new MainWindow();
+            mainWindow.Show();
         }
 
         /// <summary>
