@@ -131,6 +131,14 @@ namespace Contract2512.Services
                 await process.WaitForExitAsync();
 
                 Debug.WriteLine($"✅ Update.exe завершен с кодом: {process.ExitCode}");
+                Debug.WriteLine($"📤 Output: {output}");
+                Debug.WriteLine($"⚠️ Error: {error}");
+
+                // ДИАГНОСТИКА: Показываем полный вывод Update.exe
+                var diagnosticMessage = $"ExitCode: {process.ExitCode}\n\n";
+                diagnosticMessage += $"Output:\n{output}\n\n";
+                diagnosticMessage += $"Error:\n{error}";
+                System.Windows.MessageBox.Show(diagnosticMessage, "Update.exe диагностика", System.Windows.MessageBoxButton.OK);
 
                 // ExitCode 0 = обновление доступно
                 // ExitCode 1 = обновлений нет
