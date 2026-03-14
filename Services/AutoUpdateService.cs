@@ -71,13 +71,17 @@ namespace Contract2512.Services
             {
                 Debug.WriteLine($"🔍 Проверка обновлений по URL: {_updateUrl}");
                 Debug.WriteLine($"📌 Текущая версия: {_currentVersion}");
+                Debug.WriteLine($"📂 Папка приложения: {AppDomain.CurrentDomain.BaseDirectory}");
 
                 var assembly = LoadSquirrelAssembly();
                 if (assembly == null)
                 {
                     Debug.WriteLine($"⚠️ Squirrel не загружен, автообновление недоступно");
+                    Debug.WriteLine($"ℹ️ Это нормально для запуска из Visual Studio");
                     return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
                 }
+
+                Debug.WriteLine($"✅ Squirrel assembly загружен: {assembly.FullName}");
 
                 // Создаем UpdateManager через рефлексию
                 var updateManagerType = assembly.GetType("Clowd.Squirrel.UpdateManager");
@@ -87,12 +91,17 @@ namespace Contract2512.Services
                     return new UpdateInfo { HasUpdate = false, Error = "UpdateManager not found", CurrentVersion = _currentVersion };
                 }
 
+                Debug.WriteLine($"✅ UpdateManager найден");
+                Debug.WriteLine($"🌐 Создаем UpdateManager с URL: {_updateUrl}");
+
                 var updateManager = Activator.CreateInstance(updateManagerType, _updateUrl);
                 if (updateManager == null)
                 {
                     Debug.WriteLine($"❌ Не удалось создать UpdateManager");
                     return new UpdateInfo { HasUpdate = false, Error = "Failed to create UpdateManager", CurrentVersion = _currentVersion };
                 }
+
+                Debug.WriteLine($"✅ UpdateManager создан");
 
                 // Вызываем CheckForUpdate
                 var checkMethod = updateManagerType.GetMethod("CheckForUpdate");
@@ -102,6 +111,8 @@ namespace Contract2512.Services
                     return new UpdateInfo { HasUpdate = false, Error = "CheckForUpdate method not found", CurrentVersion = _currentVersion };
                 }
 
+                Debug.WriteLine($"🔄 Вызываем CheckForUpdate...");
+
                 var updateInfoTask = checkMethod.Invoke(updateManager, null) as Task;
                 if (updateInfoTask == null)
                 {
@@ -109,7 +120,9 @@ namespace Contract2512.Services
                     return new UpdateInfo { HasUpdate = false, Error = "CheckForUpdate failed", CurrentVersion = _currentVersion };
                 }
 
+                Debug.WriteLine($"⏳ Ожидаем результат CheckForUpdate...");
                 await updateInfoTask.ConfigureAwait(false);
+                Debug.WriteLine($"✅ CheckForUpdate завершен");
 
                 // Получаем результат
                 var resultProperty = updateInfoTask.GetType().GetProperty("Result");
@@ -117,13 +130,17 @@ namespace Contract2512.Services
 
                 if (updateInfoResult == null)
                 {
-                    Debug.WriteLine($"ℹ️ Обновлений нет");
+                    Debug.WriteLine($"ℹ️ Обновлений нет (updateInfoResult == null)");
                     return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
                 }
+
+                Debug.WriteLine($"✅ Получен результат updateInfo");
 
                 // Проверяем ReleasesToApply
                 var releasesToApplyProperty = updateInfoResult.GetType().GetProperty("ReleasesToApply");
                 var releasesToApply = releasesToApplyProperty?.GetValue(updateInfoResult) as System.Collections.IList;
+
+                Debug.WriteLine($"📦 ReleasesToApply count: {releasesToApply?.Count ?? 0}");
 
                 if (releasesToApply != null && releasesToApply.Count > 0)
                 {
@@ -135,6 +152,8 @@ namespace Contract2512.Services
                     var versionProperty = futureRelease?.GetType().GetProperty("Version");
                     var version = versionProperty?.GetValue(futureRelease);
 
+                    Debug.WriteLine($"🎯 Новая версия: {version}");
+
                     return new UpdateInfo
                     {
                         HasUpdate = true,
@@ -144,13 +163,18 @@ namespace Contract2512.Services
                     };
                 }
 
-                Debug.WriteLine($"ℹ️ Обновлений нет");
+                Debug.WriteLine($"ℹ️ Обновлений нет (ReleasesToApply пуст)");
                 return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ Ошибка проверки обновлений: {ex.Message}");
                 Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Debug.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                    Debug.WriteLine($"Inner stack trace: {ex.InnerException.StackTrace}");
+                }
                 return new UpdateInfo { HasUpdate = false, Error = ex.Message, CurrentVersion = _currentVersion };
             }
         }
