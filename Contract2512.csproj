@@ -14,6 +14,9 @@
     
     <!-- Disable temporary WPF assembly generation -->
     <GenerateTemporaryTargetAssembly>false</GenerateTemporaryTargetAssembly>
+    
+    <!-- Copy all dependencies to output folder -->
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
