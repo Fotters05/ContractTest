@@ -74,7 +74,15 @@ jobs:
       shell: pwsh
       
     - name: Build and Publish
-      run: dotnet publish Contract2512.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=false
+      run: |
+        Write-Host "Building project..." -ForegroundColor Cyan
+        # Сначала собираем проект
+        dotnet build Contract2512.csproj -c Release
+        
+        Write-Host "Publishing project..." -ForegroundColor Cyan
+        # Затем публикуем уже собранный проект
+        dotnet publish Contract2512.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=false --no-build
+      shell: pwsh
       
     - name: Get version from tag
       id: get_version
