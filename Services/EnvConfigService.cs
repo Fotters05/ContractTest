@@ -27,47 +27,66 @@ public static class EnvConfigService
             // Squirrel установка: храним в %LocalAppData%\Contract2512\.env
             var envPath = Path.Combine(parentDir, ".env");
             
-            // Миграция: если .env нет в родительской папке, но есть в текущей app-X.X.X
-            if (!File.Exists(envPath))
+            // Миграция: копируем .env из app-X.X.X в родительскую папку
+            // Проверяем нужна ли миграция (файл не существует или пустой/дефолтный)
+            bool needsMigration = !File.Exists(envPath);
+            
+            if (!needsMigration)
             {
-                var oldEnvPath = Path.Combine(baseDir, ".env");
-                if (File.Exists(oldEnvPath))
+                // Проверяем, есть ли в файле строка подключения
+                try
                 {
-                    // Копируем старый .env в родительскую папку
+                    var content = File.ReadAllText(envPath);
+                    needsMigration = !content.Contains("DB_CONNECTION_STRING=") || 
+                                   content.Contains("# DB_CONNECTION_STRING="); // Закомментированная строка
+                }
+                catch
+                {
+                    needsMigration = true;
+                }
+            }
+            
+            if (needsMigration)
+            {
+                // Ищем .env с данными в текущей или других версиях app-X.X.X
+                var currentEnv = Path.Combine(baseDir, ".env");
+                var appDirs = Directory.GetDirectories(parentDir, "app-*")
+                    .OrderByDescending(d => d); // Сортируем по убыванию (новые версии первыми)
+                
+                // Сначала проверяем текущую папку
+                if (File.Exists(currentEnv) && HasConnectionString(currentEnv))
+                {
                     try
                     {
-                        File.Copy(oldEnvPath, envPath, overwrite: false);
+                        File.Copy(currentEnv, envPath, overwrite: true);
                     }
-                    catch
-                    {
-                        // Если не удалось скопировать, создаем новый
-                        CreateDefaultEnvFile(envPath);
-                    }
+                    catch { }
                 }
                 else
                 {
-                    // Проверяем другие версии app-X.X.X
-                    var appDirs = Directory.GetDirectories(parentDir, "app-*");
+                    // Ищем в других версиях
                     foreach (var appDir in appDirs)
                     {
+                        if (appDir == baseDir) continue; // Уже проверили
+                        
                         var oldEnv = Path.Combine(appDir, ".env");
-                        if (File.Exists(oldEnv))
+                        if (File.Exists(oldEnv) && HasConnectionString(oldEnv))
                         {
                             try
                             {
-                                File.Copy(oldEnv, envPath, overwrite: false);
+                                File.Copy(oldEnv, envPath, overwrite: true);
                                 break;
                             }
                             catch { }
                         }
                     }
-                    
-                    // Если так и не нашли, создаем новый
-                    if (!File.Exists(envPath))
-                    {
-                        CreateDefaultEnvFile(envPath);
-                    }
                 }
+            }
+            
+            // Если файл все еще не существует, создаем дефолтный
+            if (!File.Exists(envPath))
+            {
+                CreateDefaultEnvFile(envPath);
             }
             
             return envPath;
@@ -78,6 +97,37 @@ public static class EnvConfigService
         if (!File.Exists(fallbackPath))
         {
             CreateDefaultEnvFile(fallbackPath);
+        }
+        return fallbackPath;
+    }
+    
+    /// <summary>
+    /// Проверяет, содержит ли .env файл строку подключения
+    /// </summary>
+    private static bool HasConnectionString(string envFilePath)
+    {
+        try
+        {
+            var content = File.ReadAllText(envFilePath);
+            // Проверяем что есть незакомментированная строка подключения
+            var lines = content.Split('\n');
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim();
+                if (trimmed.StartsWith("DB_CONNECTION_STRING=") && 
+                    !trimmed.StartsWith("#") &&
+                    trimmed.Length > "DB_CONNECTION_STRING=".Length)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        catch
+        {
+            return false;
+        }
+    }
         }
         return fallbackPath;
     }

@@ -51,7 +51,9 @@ namespace Contract2512.Views
                     ProgressBar.IsIndeterminate = false;
                     ProgressBar.Value = 100;
                     ProgressText.Text = "Обновление установлено! Перезапуск...";
-                    await System.Threading.Tasks.Task.Delay(1500);
+                    
+                    // Даем время пользователю увидеть сообщение
+                    await System.Threading.Tasks.Task.Delay(2000);
                     
                     // Перезапускаем приложение
                     AutoUpdateService.RestartApp();
