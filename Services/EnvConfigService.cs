@@ -128,9 +128,6 @@ public static class EnvConfigService
             return false;
         }
     }
-        }
-        return fallbackPath;
-    }
 
     /// <summary>
     /// Создает .env файл с дефолтными значениями
