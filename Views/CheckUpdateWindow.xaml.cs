@@ -63,6 +63,10 @@ namespace Contract2512.Views
                     ProgressBar.IsIndeterminate = false;
                     ProgressBar.Visibility = Visibility.Collapsed;
                     
+                    // ВРЕМЕННО: показываем детали ошибки
+                    MessageBox.Show($"Ошибка проверки обновлений:\n\n{_updateInfo.Error}\n\nТекущая версия: {_updateInfo.CurrentVersion}", 
+                        "Debug Info", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    
                     await Task.Delay(3000);
                     DialogResult = false;
                     Close();

@@ -88,6 +88,8 @@ namespace Contract2512.Services
 
                 Debug.WriteLine($"✅ Update.exe найден: {updateExe}");
                 Debug.WriteLine($"🔄 Запускаем проверку обновлений...");
+                Debug.WriteLine($"🌐 Полный URL: {_updateUrl}");
+                Debug.WriteLine($"📝 Команда: {updateExe} --checkForUpdate --url \"{_updateUrl}\"");
 
                 // Запускаем Update.exe --checkForUpdate --url <updateUrl>
                 var startInfo = new ProcessStartInfo
