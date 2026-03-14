@@ -35,14 +35,28 @@ namespace Contract2512.Services
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
                 var squirrelDll = Path.Combine(appDir, "Clowd.Squirrel.dll");
 
+                Debug.WriteLine($"🔍 Ищем Squirrel в: {appDir}");
+                Debug.WriteLine($"📁 Полный путь: {squirrelDll}");
+                Debug.WriteLine($"✓ Файл существует: {File.Exists(squirrelDll)}");
+
                 if (File.Exists(squirrelDll))
                 {
                     Debug.WriteLine($"✅ Загружаем Squirrel из: {squirrelDll}");
                     _squirrelAssembly = Assembly.LoadFrom(squirrelDll);
+                    Debug.WriteLine($"✅ Squirrel загружен: {_squirrelAssembly.FullName}");
                     return _squirrelAssembly;
                 }
 
                 Debug.WriteLine($"⚠️ Clowd.Squirrel.dll не найден в: {appDir}");
+                
+                // Показываем список файлов в папке
+                var files = Directory.GetFiles(appDir, "*.dll");
+                Debug.WriteLine($"📂 DLL файлы в папке ({files.Length}):");
+                foreach (var file in files.Take(10))
+                {
+                    Debug.WriteLine($"  - {Path.GetFileName(file)}");
+                }
+                
                 return null;
             }
             catch (Exception ex)
