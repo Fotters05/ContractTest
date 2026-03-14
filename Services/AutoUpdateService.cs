@@ -1,16 +1,13 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
-
-#if !DEBUG
-using Clowd.Squirrel;
-#endif
 
 namespace Contract2512.Services
 {
     /// <summary>
-    /// Сервис автоматического обновления приложения через Clowd.Squirrel
+    /// Сервис автоматического обновления приложения через Squirrel Update.exe
     /// </summary>
     public class AutoUpdateService
     {
@@ -34,31 +31,64 @@ namespace Contract2512.Services
         }
 
         /// <summary>
-        /// Проверяет наличие обновлений через Squirrel
+        /// Проверяет наличие обновлений через Update.exe
         /// </summary>
         public async Task<UpdateInfo> CheckForUpdatesAsync()
         {
-#if DEBUG
-            Debug.WriteLine($"⚠️ Автообновление отключено в DEBUG режиме");
-            return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
-#else
             try
             {
                 Debug.WriteLine($"🔍 Проверка обновлений по URL: {_updateUrl}");
                 Debug.WriteLine($"📌 Текущая версия: {_currentVersion}");
                 
-                using var updateManager = new UpdateManager(_updateUrl);
-                var updateInfo = await updateManager.CheckForUpdate();
-
-                if (updateInfo?.ReleasesToApply?.Count > 0)
+                // Ищем Update.exe в родительской папке (Squirrel устанавливает его там)
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var updateExe = Path.Combine(appDir, "..", "Update.exe");
+                
+                if (!File.Exists(updateExe))
                 {
-                    var newVersion = updateInfo.FutureReleaseEntry?.Version?.ToString() ?? "Unknown";
-                    Debug.WriteLine($"✅ Найдено обновление: {newVersion}");
-                    
+                    Debug.WriteLine($"⚠️ Update.exe не найден по пути: {updateExe}");
+                    Debug.WriteLine($"ℹ️ Автообновление работает только для установленного приложения");
+                    return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
+                }
+
+                Debug.WriteLine($"✅ Update.exe найден: {updateExe}");
+                
+                // Запускаем Update.exe --checkForUpdate
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = updateExe,
+                    Arguments = $"--checkForUpdate=\"{_updateUrl}\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    Debug.WriteLine($"❌ Не удалось запустить Update.exe");
+                    return new UpdateInfo { HasUpdate = false, Error = "Failed to start Update.exe", CurrentVersion = _currentVersion };
+                }
+
+                var output = await process.StandardOutput.ReadToEndAsync();
+                var error = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                Debug.WriteLine($"Update.exe output: {output}");
+                if (!string.IsNullOrEmpty(error))
+                {
+                    Debug.WriteLine($"Update.exe error: {error}");
+                }
+
+                // Если есть обновление, Update.exe вернет информацию о нем
+                if (process.ExitCode == 0 && !string.IsNullOrEmpty(output))
+                {
+                    Debug.WriteLine($"✅ Найдено обновление");
                     return new UpdateInfo
                     {
                         HasUpdate = true,
-                        Version = newVersion,
+                        Version = "новая версия",
                         ReleaseNotes = "Доступна новая версия приложения",
                         CurrentVersion = _currentVersion
                     };
@@ -72,46 +102,61 @@ namespace Contract2512.Services
                 Debug.WriteLine($"❌ Ошибка проверки обновлений: {ex.Message}");
                 return new UpdateInfo { HasUpdate = false, Error = ex.Message, CurrentVersion = _currentVersion };
             }
-#endif
         }
 
         /// <summary>
-        /// Скачивает и устанавливает обновление через Squirrel
+        /// Скачивает и устанавливает обновление через Update.exe
         /// </summary>
         public async Task<bool> DownloadAndInstallUpdateAsync(IProgress<int>? progress = null)
         {
-#if DEBUG
-            Debug.WriteLine($"⚠️ Автообновление отключено в DEBUG режиме");
-            return false;
-#else
             try
             {
                 Debug.WriteLine($"📥 Начало загрузки обновления...");
                 
-                using var updateManager = new UpdateManager(_updateUrl);
-                var updateInfo = await updateManager.CheckForUpdate();
-
-                if (updateInfo?.ReleasesToApply?.Count > 0)
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var updateExe = Path.Combine(appDir, "..", "Update.exe");
+                
+                if (!File.Exists(updateExe))
                 {
-                    Debug.WriteLine($"📦 Найдено релизов: {updateInfo.ReleasesToApply.Count}");
-                    
-                    // Скачиваем релизы с прогрессом
-                    await updateManager.DownloadReleases(updateInfo.ReleasesToApply, p => 
-                    {
-                        progress?.Report(p);
-                        Debug.WriteLine($"📥 Прогресс: {p}%");
-                    });
-                    
-                    Debug.WriteLine($"✅ Загрузка завершена, применение обновлений...");
-                    
-                    // Применяем обновления
-                    await updateManager.ApplyReleases(updateInfo);
-                    
+                    Debug.WriteLine($"❌ Update.exe не найден");
+                    return false;
+                }
+
+                // Запускаем Update.exe --update
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = updateExe,
+                    Arguments = $"--update=\"{_updateUrl}\"",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    Debug.WriteLine($"❌ Не удалось запустить Update.exe");
+                    return false;
+                }
+
+                var output = await process.StandardOutput.ReadToEndAsync();
+                var error = await process.StandardError.ReadToEndAsync();
+                await process.WaitForExitAsync();
+
+                Debug.WriteLine($"Update.exe output: {output}");
+                if (!string.IsNullOrEmpty(error))
+                {
+                    Debug.WriteLine($"Update.exe error: {error}");
+                }
+
+                if (process.ExitCode == 0)
+                {
                     Debug.WriteLine($"✅ Обновление установлено!");
                     return true;
                 }
 
-                Debug.WriteLine($"ℹ️ Нет релизов для применения");
+                Debug.WriteLine($"❌ Ошибка установки, код: {process.ExitCode}");
                 return false;
             }
             catch (Exception ex)
@@ -119,7 +164,6 @@ namespace Contract2512.Services
                 Debug.WriteLine($"❌ Ошибка установки: {ex.Message}");
                 return false;
             }
-#endif
         }
 
         /// <summary>
@@ -127,19 +171,29 @@ namespace Contract2512.Services
         /// </summary>
         public static void RestartApp()
         {
-#if DEBUG
-            Debug.WriteLine($"⚠️ Перезапуск отключен в DEBUG режиме");
-#else
             try
             {
                 Debug.WriteLine($"🔄 Перезапуск приложения...");
-                UpdateManager.RestartApp();
+                
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var updateExe = Path.Combine(appDir, "..", "Update.exe");
+                
+                if (File.Exists(updateExe))
+                {
+                    // Запускаем Update.exe --processStart для перезапуска
+                    var exeName = Path.GetFileName(Assembly.GetExecutingAssembly().Location);
+                    Process.Start(updateExe, $"--processStart=\"{exeName}\"");
+                    Environment.Exit(0);
+                }
+                else
+                {
+                    Debug.WriteLine($"❌ Update.exe не найден для перезапуска");
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ Ошибка перезапуска: {ex.Message}");
             }
-#endif
         }
     }
 

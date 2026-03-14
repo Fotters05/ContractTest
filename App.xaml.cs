@@ -1,12 +1,10 @@
 ﻿using System.Configuration;
 using System.Data;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using Contract2512.Services;
 using Contract2512.Views;
-
-#if !DEBUG
-using Clowd.Squirrel;
-#endif
 
 namespace Contract2512
 {
@@ -19,14 +17,8 @@ namespace Contract2512
         {
             base.OnStartup(e);
             
-#if !DEBUG
-            // Обрабатываем события Squirrel (установка, обновление, удаление)
-            SquirrelAwareApp.HandleEvents(
-                onInitialInstall: v => SquirrelAwareApp.CreateShortcutForThisExe(),
-                onAppUpdate: v => SquirrelAwareApp.CreateShortcutForThisExe(),
-                onAppUninstall: v => SquirrelAwareApp.RemoveShortcutForThisExe()
-            );
-#endif
+            // Обрабатываем события Squirrel через Update.exe
+            HandleSquirrelEvents();
             
             // Проверяем и устанавливаем npm пакеты для парсера (если нужно)
             await CheckAndInstallNodePackagesAsync();
@@ -54,6 +46,51 @@ namespace Contract2512
 
             // Проверяем обновления (в фоновом режиме, не блокируем запуск)
             _ = CheckForUpdatesAsync();
+        }
+
+        /// <summary>
+        /// Обрабатывает события Squirrel (установка, обновление, удаление)
+        /// </summary>
+        private void HandleSquirrelEvents()
+        {
+            try
+            {
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var updateExe = Path.Combine(appDir, "..", "Update.exe");
+                
+                if (!File.Exists(updateExe))
+                {
+                    Debug.WriteLine("⚠️ Update.exe не найден, пропускаем обработку Squirrel событий");
+                    return;
+                }
+
+                var args = Environment.GetCommandLineArgs();
+                
+                // Проверяем аргументы командной строки для Squirrel событий
+                if (args.Length > 1)
+                {
+                    var arg = args[1];
+                    
+                    if (arg.Contains("squirrel-install") || arg.Contains("squirrel-updated"))
+                    {
+                        // Создаем ярлыки при установке/обновлении
+                        Process.Start(updateExe, "--createShortcut Contract2512.exe");
+                        Shutdown();
+                        return;
+                    }
+                    else if (arg.Contains("squirrel-uninstall"))
+                    {
+                        // Удаляем ярлыки при удалении
+                        Process.Start(updateExe, "--removeShortcut Contract2512.exe");
+                        Shutdown();
+                        return;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Ошибка обработки Squirrel событий: {ex.Message}");
+            }
         }
 
         /// <summary>
