@@ -3,7 +3,10 @@ using System.Data;
 using System.Windows;
 using Contract2512.Services;
 using Contract2512.Views;
+
+#if !DEBUG
 using Clowd.Squirrel;
+#endif
 
 namespace Contract2512
 {
@@ -16,12 +19,14 @@ namespace Contract2512
         {
             base.OnStartup(e);
             
+#if !DEBUG
             // Обрабатываем события Squirrel (установка, обновление, удаление)
             SquirrelAwareApp.HandleEvents(
                 onInitialInstall: v => SquirrelAwareApp.CreateShortcutForThisExe(),
                 onAppUpdate: v => SquirrelAwareApp.CreateShortcutForThisExe(),
                 onAppUninstall: v => SquirrelAwareApp.RemoveShortcutForThisExe()
             );
+#endif
             
             // Проверяем и устанавливаем npm пакеты для парсера (если нужно)
             await CheckAndInstallNodePackagesAsync();

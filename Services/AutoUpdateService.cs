@@ -2,7 +2,10 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
+
+#if !DEBUG
 using Clowd.Squirrel;
+#endif
 
 namespace Contract2512.Services
 {
@@ -35,6 +38,10 @@ namespace Contract2512.Services
         /// </summary>
         public async Task<UpdateInfo> CheckForUpdatesAsync()
         {
+#if DEBUG
+            Debug.WriteLine($"⚠️ Автообновление отключено в DEBUG режиме");
+            return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
+#else
             try
             {
                 Debug.WriteLine($"🔍 Проверка обновлений по URL: {_updateUrl}");
@@ -65,6 +72,7 @@ namespace Contract2512.Services
                 Debug.WriteLine($"❌ Ошибка проверки обновлений: {ex.Message}");
                 return new UpdateInfo { HasUpdate = false, Error = ex.Message, CurrentVersion = _currentVersion };
             }
+#endif
         }
 
         /// <summary>
@@ -72,6 +80,10 @@ namespace Contract2512.Services
         /// </summary>
         public async Task<bool> DownloadAndInstallUpdateAsync(IProgress<int>? progress = null)
         {
+#if DEBUG
+            Debug.WriteLine($"⚠️ Автообновление отключено в DEBUG режиме");
+            return false;
+#else
             try
             {
                 Debug.WriteLine($"📥 Начало загрузки обновления...");
@@ -107,6 +119,7 @@ namespace Contract2512.Services
                 Debug.WriteLine($"❌ Ошибка установки: {ex.Message}");
                 return false;
             }
+#endif
         }
 
         /// <summary>
@@ -114,6 +127,9 @@ namespace Contract2512.Services
         /// </summary>
         public static void RestartApp()
         {
+#if DEBUG
+            Debug.WriteLine($"⚠️ Перезапуск отключен в DEBUG режиме");
+#else
             try
             {
                 Debug.WriteLine($"🔄 Перезапуск приложения...");
@@ -123,6 +139,7 @@ namespace Contract2512.Services
             {
                 Debug.WriteLine($"❌ Ошибка перезапуска: {ex.Message}");
             }
+#endif
         }
     }
 
