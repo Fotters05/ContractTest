@@ -12,8 +12,9 @@
     <AssemblyVersion>1.2.5.0</AssemblyVersion>
     <FileVersion>1.2.5.0</FileVersion>
     
-    <!-- Disable temporary WPF assembly generation -->
+    <!-- Disable temporary WPF assembly generation - CRITICAL for Squirrel -->
     <GenerateTemporaryTargetAssembly>false</GenerateTemporaryTargetAssembly>
+    <DisableWPFTemporaryProjectGeneration>true</DisableWPFTemporaryProjectGeneration>
     
     <!-- Copy all dependencies to output folder -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
