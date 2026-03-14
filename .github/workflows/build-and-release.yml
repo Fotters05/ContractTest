@@ -31,11 +31,36 @@ jobs:
       
     - name: Restore NuGet packages
       run: |
-        dotnet restore Contract2512.csproj
-        # Проверяем, что пакет Clowd.Squirrel восстановлен
-        if (!(Test-Path "$env:USERPROFILE\.nuget\packages\clowd.squirrel")) {
-          Write-Host "Installing Clowd.Squirrel package..." -ForegroundColor Yellow
-          dotnet add Contract2512.csproj package Clowd.Squirrel -v 2.11.1
+        Write-Host "Restoring NuGet packages..." -ForegroundColor Cyan
+        dotnet restore Contract2512.csproj --verbosity detailed
+        
+        Write-Host "Checking Clowd.Squirrel package..." -ForegroundColor Cyan
+        $packagePath = "$env:USERPROFILE\.nuget\packages\clowd.squirrel"
+        if (Test-Path $packagePath) {
+          Write-Host "✅ Clowd.Squirrel found at: $packagePath" -ForegroundColor Green
+          Get-ChildItem $packagePath -Recurse -Filter "*.dll" | Select-Object -First 5 | ForEach-Object { Write-Host "  - $($_.FullName)" }
+        } else {
+          Write-Host "❌ Clowd.Squirrel NOT found, installing explicitly..." -ForegroundColor Red
+          dotnet add Contract2512.csproj package Clowd.Squirrel --version 2.11.1
+          dotnet restore Contract2512.csproj --force
+        }
+      shell: pwsh
+      
+    - name: Verify packages before build
+      run: |
+        Write-Host "Verifying project references..." -ForegroundColor Cyan
+        dotnet list Contract2512.csproj package | Select-String "Clowd.Squirrel"
+        
+        Write-Host "Checking obj folder..." -ForegroundColor Cyan
+        if (Test-Path "obj/project.assets.json") {
+          $assets = Get-Content "obj/project.assets.json" | ConvertFrom-Json
+          if ($assets.libraries."Clowd.Squirrel/2.11.1") {
+            Write-Host "✅ Clowd.Squirrel found in project.assets.json" -ForegroundColor Green
+          } else {
+            Write-Host "❌ Clowd.Squirrel NOT in project.assets.json" -ForegroundColor Red
+            Write-Host "Available packages:" -ForegroundColor Yellow
+            $assets.libraries.PSObject.Properties.Name | Where-Object { $_ -like "*Squirrel*" }
+          }
         }
       shell: pwsh
       
