@@ -47,11 +47,22 @@ namespace Contract2512
             }
 
             // Проверяем обновления и показываем главное окно
-            await CheckForUpdatesAsync();
+            CheckForUpdatesInBackground();
             
-            // Открываем главное окно приложения
+            // Открываем главное окно сразу
             var mainWindow = new MainWindow();
             mainWindow.Show();
+        }
+
+        /// <summary>
+        /// Проверяет наличие обновлений в фоновом режиме
+        /// </summary>
+        private async void CheckForUpdatesInBackground()
+        {
+            // Небольшая задержка чтобы главное окно успело открыться
+            await System.Threading.Tasks.Task.Delay(1000);
+            
+            await CheckForUpdatesAsync();
         }
 
         /// <summary>
