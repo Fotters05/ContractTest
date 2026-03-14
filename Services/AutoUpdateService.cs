@@ -177,8 +177,8 @@ namespace Contract2512.Services
                 // ExitCode 2+ = ошибка
                 if (process.ExitCode == 0)
                 {
-                    // Пытаемся извлечь версию из вывода
-                    var versionMatch = Regex.Match(output, @"(\d+\.\d+\.\d+)");
+                    // Пытаемся извлечь версию из вывода (ищем futureVersion в JSON)
+                    var versionMatch = Regex.Match(output, @"""futureVersion"":""(\d+\.\d+\.\d+)""");
                     var newVersion = versionMatch.Success ? versionMatch.Groups[1].Value : "";
 
                     UpdateLogger.Log($"Версия из вывода Update.exe: {newVersion}");
