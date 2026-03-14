@@ -75,21 +75,19 @@ namespace Contract2512.Services
         {
             try
             {
-                Debug.WriteLine($"🔍 Проверка обновлений по URL: {_updateUrl}");
-                Debug.WriteLine($"📌 Текущая версия: {_currentVersion}");
+                UpdateLogger.LogSection("НАЧАЛО ПРОВЕРКИ ОБНОВЛЕНИЙ");
+                UpdateLogger.Log($"URL для проверки: {_updateUrl}");
+                UpdateLogger.Log($"Текущая версия: {_currentVersion}");
 
                 var updateExe = FindUpdateExe();
                 if (updateExe == null)
                 {
-                    Debug.WriteLine($"⚠️ Update.exe не найден, автообновление недоступно");
-                    Debug.WriteLine($"ℹ️ Это нормально для запуска из Visual Studio");
+                    UpdateLogger.Log("⚠️ Update.exe не найден - приложение запущено не из Squirrel установки");
                     return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
                 }
 
-                Debug.WriteLine($"✅ Update.exe найден: {updateExe}");
-                Debug.WriteLine($"🔄 Запускаем проверку обновлений...");
-                Debug.WriteLine($"🌐 Полный URL: {_updateUrl}");
-                Debug.WriteLine($"📝 Команда: {updateExe} --checkForUpdate --url \"{_updateUrl}\"");
+                UpdateLogger.Log($"✅ Update.exe найден: {updateExe}");
+                UpdateLogger.Log($"Команда: {updateExe} --checkForUpdate --url \"{_updateUrl}\"");
 
                 // Запускаем Update.exe --checkForUpdate --url <updateUrl>
                 var startInfo = new ProcessStartInfo
@@ -111,7 +109,7 @@ namespace Contract2512.Services
                     if (!string.IsNullOrEmpty(e.Data))
                     {
                         output += e.Data + "\n";
-                        Debug.WriteLine($"📤 Update.exe: {e.Data}");
+                        UpdateLogger.Log($"[Update.exe OUT] {e.Data}");
                     }
                 };
 
@@ -120,25 +118,22 @@ namespace Contract2512.Services
                     if (!string.IsNullOrEmpty(e.Data))
                     {
                         error += e.Data + "\n";
-                        Debug.WriteLine($"⚠️ Update.exe error: {e.Data}");
+                        UpdateLogger.Log($"[Update.exe ERR] {e.Data}");
                     }
                 };
 
+                UpdateLogger.Log("Запуск Update.exe...");
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
                 await process.WaitForExitAsync();
 
-                Debug.WriteLine($"✅ Update.exe завершен с кодом: {process.ExitCode}");
-                Debug.WriteLine($"📤 Output: {output}");
-                Debug.WriteLine($"⚠️ Error: {error}");
-
-                // ДИАГНОСТИКА: Показываем полный вывод Update.exe
-                var diagnosticMessage = $"ExitCode: {process.ExitCode}\n\n";
-                diagnosticMessage += $"Output:\n{output}\n\n";
-                diagnosticMessage += $"Error:\n{error}";
-                System.Windows.MessageBox.Show(diagnosticMessage, "Update.exe диагностика", System.Windows.MessageBoxButton.OK);
+                UpdateLogger.Log($"Update.exe завершен с кодом: {process.ExitCode}");
+                UpdateLogger.LogSection("РЕЗУЛЬТАТ ПРОВЕРКИ");
+                UpdateLogger.Log($"ExitCode: {process.ExitCode}");
+                UpdateLogger.Log($"Output:\n{output}");
+                UpdateLogger.Log($"Error:\n{error}");
 
                 // ExitCode 0 = обновление доступно
                 // ExitCode 1 = обновлений нет
@@ -151,7 +146,7 @@ namespace Contract2512.Services
                     var versionMatch = Regex.Match(output, @"(\d+\.\d+\.\d+)");
                     var newVersion = versionMatch.Success ? versionMatch.Groups[1].Value : "новая версия";
 
-                    Debug.WriteLine($"🎯 Новая версия: {newVersion}");
+                    UpdateLogger.Log($"✅ ОБНОВЛЕНИЕ НАЙДЕНО! Новая версия: {newVersion}");
 
                     return new UpdateInfo
                     {
@@ -163,19 +158,21 @@ namespace Contract2512.Services
                 }
                 else if (process.ExitCode == 1)
                 {
-                    Debug.WriteLine($"ℹ️ Обновлений нет");
+                    UpdateLogger.Log("ℹ️ Обновлений нет (ExitCode = 1)");
                     return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
                 }
                 else
                 {
-                    Debug.WriteLine($"❌ Ошибка проверки обновлений: {error}");
-                    return new UpdateInfo { HasUpdate = false, Error = error, CurrentVersion = _currentVersion };
+                    UpdateLogger.Log($"❌ Ошибка проверки обновлений (ExitCode = {process.ExitCode})");
+                    UpdateLogger.Log($"Лог сохранен в: {UpdateLogger.GetLogFilePath()}");
+                    return new UpdateInfo { HasUpdate = false, Error = $"ExitCode: {process.ExitCode}\n{error}", CurrentVersion = _currentVersion };
                 }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"❌ Ошибка проверки обновлений: {ex.Message}");
-                Debug.WriteLine($"Stack trace: {ex.StackTrace}");
+                UpdateLogger.Log($"❌ ИСКЛЮЧЕНИЕ: {ex.Message}");
+                UpdateLogger.Log($"Stack trace: {ex.StackTrace}");
+                UpdateLogger.Log($"Лог сохранен в: {UpdateLogger.GetLogFilePath()}");
                 return new UpdateInfo { HasUpdate = false, Error = ex.Message, CurrentVersion = _currentVersion };
             }
         }

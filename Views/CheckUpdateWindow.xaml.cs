@@ -39,7 +39,8 @@ namespace Contract2512.Views
                 var diagnosticInfo = $"Текущая версия: {_updateInfo.CurrentVersion}\n";
                 diagnosticInfo += $"HasUpdate: {_updateInfo.HasUpdate}\n";
                 diagnosticInfo += $"Новая версия: {_updateInfo.Version}\n";
-                diagnosticInfo += $"Ошибка: {_updateInfo.Error}\n";
+                diagnosticInfo += $"Ошибка: {_updateInfo.Error}\n\n";
+                diagnosticInfo += $"Лог сохранен в:\n{UpdateLogger.GetLogFilePath()}";
                 
                 System.Diagnostics.Debug.WriteLine($"=== ДИАГНОСТИКА ОБНОВЛЕНИЯ ===");
                 System.Diagnostics.Debug.WriteLine(diagnosticInfo);
