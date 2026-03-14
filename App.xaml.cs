@@ -1,9 +1,9 @@
 ﻿using System.Configuration;
 using System.Data;
+using System.Reflection;
 using System.Windows;
 using Contract2512.Services;
 using Contract2512.Views;
-using Clowd.Squirrel;
 
 namespace Contract2512
 {
@@ -17,11 +17,7 @@ namespace Contract2512
             base.OnStartup(e);
             
             // Обрабатываем события Squirrel (установка, обновление, удаление)
-            SquirrelAwareApp.HandleEvents(
-                onInitialInstall: OnAppInstall,
-                onAppUpdate: OnAppUpdate,
-                onAppUninstall: OnAppUninstall
-            );
+            HandleSquirrelEvents();
             
             // Проверяем и устанавливаем npm пакеты для парсера (если нужно)
             await CheckAndInstallNodePackagesAsync();
@@ -52,27 +48,21 @@ namespace Contract2512
         }
 
         /// <summary>
-        /// Обработчик первой установки приложения
+        /// Обрабатывает события Squirrel (установка, обновление, удаление)
         /// </summary>
-        private static void OnAppInstall(SemanticVersion version, IAppTools tools)
+        private void HandleSquirrelEvents()
         {
-            tools.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
-        }
-
-        /// <summary>
-        /// Обработчик обновления приложения
-        /// </summary>
-        private static void OnAppUpdate(SemanticVersion version, IAppTools tools)
-        {
-            tools.CreateShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
-        }
-
-        /// <summary>
-        /// Обработчик удаления приложения
-        /// </summary>
-        private static void OnAppUninstall(SemanticVersion version, IAppTools tools)
-        {
-            tools.RemoveShortcutForThisExe(ShortcutLocation.StartMenu | ShortcutLocation.Desktop);
+            try
+            {
+                var assembly = Assembly.Load("Clowd.Squirrel");
+                var type = assembly.GetType("Clowd.Squirrel.SquirrelAwareApp");
+                var method = type?.GetMethod("HandleEvents", BindingFlags.Public | BindingFlags.Static);
+                method?.Invoke(null, new object?[] { null, null, null, null, null });
+            }
+            catch
+            {
+                // Игнорируем ошибки Squirrel
+            }
         }
 
         /// <summary>

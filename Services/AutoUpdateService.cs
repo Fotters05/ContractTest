@@ -2,7 +2,6 @@ using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Threading.Tasks;
-using Clowd.Squirrel;
 
 namespace Contract2512.Services
 {
@@ -13,11 +12,21 @@ namespace Contract2512.Services
     {
         private readonly string _updateUrl;
         private readonly string _currentVersion;
+        private readonly Assembly? _squirrelAssembly;
 
         public AutoUpdateService(string updateUrl)
         {
             _updateUrl = updateUrl;
             _currentVersion = GetCurrentVersion();
+            
+            try
+            {
+                _squirrelAssembly = Assembly.Load("Clowd.Squirrel");
+            }
+            catch
+            {
+                _squirrelAssembly = null;
+            }
         }
 
         /// <summary>
@@ -35,30 +44,73 @@ namespace Contract2512.Services
         /// </summary>
         public async Task<UpdateInfo> CheckForUpdatesAsync()
         {
+            if (_squirrelAssembly == null)
+            {
+                return new UpdateInfo { HasUpdate = false, Error = "Squirrel not loaded", CurrentVersion = _currentVersion };
+            }
+
             try
             {
                 Debug.WriteLine($"🔍 Проверка обновлений по URL: {_updateUrl}");
                 Debug.WriteLine($"📌 Текущая версия: {_currentVersion}");
                 
-                using var updateManager = new UpdateManager(_updateUrl);
-                var updateInfo = await updateManager.CheckForUpdate();
+                var updateManagerType = _squirrelAssembly.GetType("Clowd.Squirrel.UpdateManager");
+                if (updateManagerType == null) throw new Exception("UpdateManager not found");
 
-                if (updateInfo?.ReleasesToApply?.Count > 0)
+                var updateManager = Activator.CreateInstance(updateManagerType, _updateUrl);
+                if (updateManager == null) throw new Exception("Failed to create UpdateManager");
+
+                try
                 {
-                    var newVersion = updateInfo.FutureReleaseEntry?.Version?.ToString() ?? "Unknown";
-                    Debug.WriteLine($"✅ Найдено обновление: {newVersion}");
-                    
-                    return new UpdateInfo
-                    {
-                        HasUpdate = true,
-                        Version = newVersion,
-                        ReleaseNotes = "Доступна новая версия приложения",
-                        CurrentVersion = _currentVersion
-                    };
-                }
+                    var checkMethod = updateManagerType.GetMethod("CheckForUpdate");
+                    if (checkMethod == null) throw new Exception("CheckForUpdate not found");
 
-                Debug.WriteLine($"ℹ️ Обновлений нет");
-                return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
+                    var checkTask = checkMethod.Invoke(updateManager, null) as Task;
+                    if (checkTask == null) throw new Exception("CheckForUpdate returned null");
+
+                    await checkTask;
+                    
+                    var resultProperty = checkTask.GetType().GetProperty("Result");
+                    var updateInfo = resultProperty?.GetValue(checkTask);
+
+                    if (updateInfo != null)
+                    {
+                        var releasesToApplyProp = updateInfo.GetType().GetProperty("ReleasesToApply");
+                        var releasesToApply = releasesToApplyProp?.GetValue(updateInfo) as System.Collections.IList;
+
+                        if (releasesToApply != null && releasesToApply.Count > 0)
+                        {
+                            var futureReleaseProp = updateInfo.GetType().GetProperty("FutureReleaseEntry");
+                            var futureRelease = futureReleaseProp?.GetValue(updateInfo);
+
+                            if (futureRelease != null)
+                            {
+                                var versionProp = futureRelease.GetType().GetProperty("Version");
+                                var version = versionProp?.GetValue(futureRelease);
+                                
+                                Debug.WriteLine($"✅ Найдено обновление: {version}");
+                                
+                                return new UpdateInfo
+                                {
+                                    HasUpdate = true,
+                                    Version = version?.ToString() ?? "Unknown",
+                                    ReleaseNotes = "Доступна новая версия приложения",
+                                    CurrentVersion = _currentVersion
+                                };
+                            }
+                        }
+                    }
+
+                    Debug.WriteLine($"ℹ️ Обновлений нет");
+                    return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
+                }
+                finally
+                {
+                    if (updateManager is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -72,35 +124,90 @@ namespace Contract2512.Services
         /// </summary>
         public async Task<bool> DownloadAndInstallUpdateAsync(IProgress<int>? progress = null)
         {
+            if (_squirrelAssembly == null)
+            {
+                return false;
+            }
+
             try
             {
                 Debug.WriteLine($"📥 Начало загрузки обновления...");
                 
-                using var updateManager = new UpdateManager(_updateUrl);
-                var updateInfo = await updateManager.CheckForUpdate();
+                var updateManagerType = _squirrelAssembly.GetType("Clowd.Squirrel.UpdateManager");
+                if (updateManagerType == null) throw new Exception("UpdateManager not found");
 
-                if (updateInfo?.ReleasesToApply?.Count > 0)
+                var updateManager = Activator.CreateInstance(updateManagerType, _updateUrl);
+                if (updateManager == null) throw new Exception("Failed to create UpdateManager");
+
+                try
                 {
-                    Debug.WriteLine($"📦 Найдено релизов: {updateInfo.ReleasesToApply.Count}");
-                    
-                    // Скачиваем релизы с прогрессом
-                    await updateManager.DownloadReleases(updateInfo.ReleasesToApply, p => 
-                    {
-                        progress?.Report(p);
-                        Debug.WriteLine($"📥 Прогресс: {p}%");
-                    });
-                    
-                    Debug.WriteLine($"✅ Загрузка завершена, применение обновлений...");
-                    
-                    // Применяем обновления
-                    await updateManager.ApplyReleases(updateInfo);
-                    
-                    Debug.WriteLine($"✅ Обновление установлено!");
-                    return true;
-                }
+                    var checkMethod = updateManagerType.GetMethod("CheckForUpdate");
+                    if (checkMethod == null) throw new Exception("CheckForUpdate not found");
 
-                Debug.WriteLine($"ℹ️ Нет релизов для применения");
-                return false;
+                    var checkTask = checkMethod.Invoke(updateManager, null) as Task;
+                    if (checkTask == null) throw new Exception("CheckForUpdate returned null");
+
+                    await checkTask;
+                    
+                    var resultProperty = checkTask.GetType().GetProperty("Result");
+                    var updateInfo = resultProperty?.GetValue(checkTask);
+
+                    if (updateInfo != null)
+                    {
+                        var releasesToApplyProp = updateInfo.GetType().GetProperty("ReleasesToApply");
+                        var releasesToApply = releasesToApplyProp?.GetValue(updateInfo) as System.Collections.IList;
+
+                        if (releasesToApply != null && releasesToApply.Count > 0)
+                        {
+                            Debug.WriteLine($"📦 Найдено релизов: {releasesToApply.Count}");
+                            
+                            var downloadMethod = updateManagerType.GetMethod("DownloadReleases");
+                            if (downloadMethod != null)
+                            {
+                                Action<int>? progressAction = null;
+                                if (progress != null)
+                                {
+                                    progressAction = p =>
+                                    {
+                                        progress.Report(p);
+                                        Debug.WriteLine($"📥 Прогресс: {p}%");
+                                    };
+                                }
+
+                                var downloadTask = downloadMethod.Invoke(updateManager, new object[] { releasesToApply, progressAction! }) as Task;
+                                if (downloadTask != null)
+                                {
+                                    await downloadTask;
+                                }
+                            }
+                            
+                            Debug.WriteLine($"✅ Загрузка завершена, применение обновлений...");
+                            
+                            var applyMethod = updateManagerType.GetMethod("ApplyReleases");
+                            if (applyMethod != null)
+                            {
+                                var applyTask = applyMethod.Invoke(updateManager, new object[] { updateInfo }) as Task;
+                                if (applyTask != null)
+                                {
+                                    await applyTask;
+                                }
+                            }
+                            
+                            Debug.WriteLine($"✅ Обновление установлено!");
+                            return true;
+                        }
+                    }
+
+                    Debug.WriteLine($"ℹ️ Нет релизов для применения");
+                    return false;
+                }
+                finally
+                {
+                    if (updateManager is IDisposable disposable)
+                    {
+                        disposable.Dispose();
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -117,7 +224,11 @@ namespace Contract2512.Services
             try
             {
                 Debug.WriteLine($"🔄 Перезапуск приложения...");
-                UpdateManager.RestartApp();
+                
+                var assembly = Assembly.Load("Clowd.Squirrel");
+                var type = assembly.GetType("Clowd.Squirrel.UpdateManager");
+                var method = type?.GetMethod("RestartApp", BindingFlags.Public | BindingFlags.Static);
+                method?.Invoke(null, null);
             }
             catch (Exception ex)
             {
