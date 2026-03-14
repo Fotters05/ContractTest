@@ -144,7 +144,7 @@ namespace Contract2512
             {
                 // Читаем настройки GitHub из .env
                 var githubOwner = EnvConfigService.Get("GITHUB_OWNER") ?? "Fotters05";
-                var githubRepo = EnvConfigService.Get("GITHUB_REPO") ?? "contracts2512";
+                var githubRepo = EnvConfigService.Get("GITHUB_REPO") ?? "ContractTest";
                 var githubToken = EnvConfigService.Get("GITHUB_TOKEN");
                 
                 // Для приватных репозиториев нужно использовать GitHub API с токеном
@@ -166,27 +166,13 @@ namespace Contract2512
                 System.Diagnostics.Debug.WriteLine($"🔍 URL: {updateUrl.Replace(githubToken ?? "", "***")}");
                 
                 var updateService = new AutoUpdateService(updateUrl);
-                var updateInfo = await updateService.CheckForUpdatesAsync();
-
-                if (updateInfo.HasUpdate)
+                
+                // Показываем окно проверки обновлений
+                Dispatcher.Invoke(() =>
                 {
-                    System.Diagnostics.Debug.WriteLine($"✅ Найдено обновление: {updateInfo.Version}");
-                    
-                    // Показываем окно обновления в UI потоке
-                    Dispatcher.Invoke(() =>
-                    {
-                        var updateWindow = new UpdateWindow(updateInfo, updateService);
-                        updateWindow.ShowDialog();
-                    });
-                }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"ℹ️ Обновлений нет. Текущая версия: {updateInfo.CurrentVersion}");
-                    if (!string.IsNullOrEmpty(updateInfo.Error))
-                    {
-                        System.Diagnostics.Debug.WriteLine($"⚠️ Ошибка: {updateInfo.Error}");
-                    }
-                }
+                    var checkWindow = new CheckUpdateWindow(updateService);
+                    checkWindow.ShowDialog();
+                });
             }
             catch (Exception ex)
             {
