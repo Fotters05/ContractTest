@@ -38,7 +38,7 @@ namespace Contract2512.Services
         {
             try
             {
-                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var appDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\', '/');
                 UpdateLogger.Log($"📂 Папка приложения: {appDir}");
 
                 // Update.exe находится на уровень выше папки app-X.X.X
