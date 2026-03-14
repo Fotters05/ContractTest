@@ -1,0 +1,282 @@
+<ui:FluentWindow x:Class="Contract2512.Views.PersonContractsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        mc:Ignorable="d"
+        Title="Договоры физического лица" 
+        Height="700" 
+        Width="1200"
+        WindowStartupLocation="CenterScreen"
+        ExtendsContentIntoTitleBar="True">
+    <Window.Resources>
+        <!-- Градиентный фиолетово-синий фон -->
+        <LinearGradientBrush x:Key="AppBackground" StartPoint="0 0" EndPoint="1 1">
+            <GradientStop Color="#1E1B4B" Offset="0"/>
+            <GradientStop Color="#0F172A" Offset="1"/>
+        </LinearGradientBrush>
+
+        <SolidColorBrush x:Key="TextPrimary" Color="White"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#D1D5DB"/>
+        <SolidColorBrush x:Key="DataGridBackground" Color="#1E293B" Opacity="0.3"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#475569"/>
+
+        <DropShadowEffect x:Key="CardShadow"
+                  Color="#000000"
+                  Opacity="0.45"
+                  BlurRadius="25"
+                  ShadowDepth="4"/>
+
+        <!-- Полупрозрачный фон для строк DataGrid -->
+        <SolidColorBrush x:Key="DataGridRowBackground" Color="#1E293B" Opacity="0.3"/>
+        <SolidColorBrush x:Key="DataGridAlternatingRowBackground" Color="#0F172A" Opacity="0.3"/>
+
+        <!-- Стиль для DataGrid в темной теме -->
+        <Style x:Key="DarkDataGridStyle" TargetType="DataGrid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="{StaticResource DataGridRowBackground}"/>
+            <Setter Property="AlternatingRowBackground" Value="{StaticResource DataGridAlternatingRowBackground}"/>
+            <Setter Property="GridLinesVisibility" Value="All"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+
+        <Style x:Key="DarkDataGridColumnHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#334155" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="BorderBrush" Value="#475569"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+        </Style>
+
+        <Style x:Key="DarkDataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="BorderBrush" Value="#475569"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#4C46E5" Opacity="0.3"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="DarkDataGridRowStyle" TargetType="DataGridRow">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#334155" Opacity="0.5"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#4C46E5" Opacity="0.4"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для кнопок управления окном -->
+        <Style x:Key="WindowControlButton" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#FFFFFF" Opacity="0.1"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для кнопки закрытия -->
+        <Style x:Key="CloseButtonStyle" TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#EF4444" Opacity="0.8"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Background="{StaticResource AppBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Custom TitleBar -->
+        <Border Grid.Row="0" Background="#312E81" Height="30" MouseDown="TitleBar_MouseDown">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" 
+                          x:Name="TitleTextBlock"
+                          Text="Договоры физического лица" 
+                          Foreground="White" 
+                          VerticalAlignment="Center" 
+                          Margin="10,0,0,0"
+                          FontSize="14"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="─" Style="{StaticResource WindowControlButton}" Click="MinimizeButton_Click"/>
+                    <Button x:Name="MaximizeRestoreButton" Content="□" Style="{StaticResource WindowControlButton}" Click="MaximizeButton_Click"/>
+                    <Button Content="✕" Style="{StaticResource CloseButtonStyle}" Click="CloseButton_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Информация о человеке и кнопки -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <TextBlock Grid.Row="0" 
+                          x:Name="PersonInfoTextBlock"
+                          Text="" 
+                          Foreground="{StaticResource TextPrimary}" 
+                          FontSize="16"
+                          FontWeight="SemiBold"
+                          Margin="0,0,0,12"/>
+                
+                <!-- Кнопка просмотра договоров -->
+                <Button Grid.Row="1"
+                       Content="Просмотр договоров" 
+                       x:Name="ViewContractButton"
+                       Click="ViewContractButton_Click"
+                       Padding="20,12"
+                       HorizontalAlignment="Left"
+                       FontSize="14"
+                       FontWeight="Medium"
+                       Cursor="Hand">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <SolidColorBrush Color="#334155" Opacity="0.8"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="Foreground" Value="White"/>
+                            <Setter Property="BorderThickness" Value="0"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}"
+                                               CornerRadius="8"
+                                               Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" 
+                                                            VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <SolidColorBrush Color="#475569" Opacity="0.9"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+
+            <!-- DataGrid с договорами -->
+            <Border Grid.Row="1" 
+                   x:Name="ContractsDataGridBorder"
+                   Background="{StaticResource DataGridBackground}"
+                   CornerRadius="12"
+                   BorderBrush="#475569"
+                   BorderThickness="1"
+                   ClipToBounds="True"
+                   Effect="{StaticResource CardShadow}">
+                <DataGrid x:Name="ContractsDataGrid" 
+                         Style="{StaticResource DarkDataGridStyle}"
+                         ClipToBounds="True">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DarkDataGridColumnHeaderStyle}"/>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.CellStyle>
+                        <Style TargetType="DataGridCell" BasedOn="{StaticResource DarkDataGridCellStyle}"/>
+                    </DataGrid.CellStyle>
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource DarkDataGridRowStyle}"/>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Номер" Binding="{Binding Contract.ContractNumber}" Width="150"/>
+                        <DataGridTextColumn Header="Дата" Binding="{Binding Contract.ContractDate, StringFormat=\{0:dd.MM.yyyy\}}" Width="100"/>
+                        <DataGridTextColumn Header="Тип договора" Binding="{Binding Contract.ContractType.Name}" Width="*"/>
+                        <DataGridTextColumn Header="Программа" Binding="{Binding Contract.Program.Name}" Width="*"/>
+                        <DataGridTextColumn Header="Роль" Binding="{Binding Role}" Width="150"/>
+                        <DataGridTextColumn Header="Дата начала" Binding="{Binding Contract.StartDate, StringFormat=\{0:dd.MM.yyyy\}}" Width="100"/>
+                        <DataGridTextColumn Header="Дата окончания" Binding="{Binding Contract.EndDate, StringFormat=\{0:dd.MM.yyyy\}}" Width="100"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>
+

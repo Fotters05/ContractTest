@@ -1,0 +1,800 @@
+<ui:FluentWindow x:Class="Contract2512.Views.ContractWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        mc:Ignorable="d"
+        Title="Создание договора" 
+        Height="680" 
+        Width="780"
+        WindowStartupLocation="CenterScreen"
+        ExtendsContentIntoTitleBar="True">
+    <Window.Resources>
+        <!-- Градиентный фиолетово-синий фон -->
+        <LinearGradientBrush x:Key="AppBackground" StartPoint="0 0" EndPoint="1 1">
+            <GradientStop Color="#1E1B4B" Offset="0"/>
+            <GradientStop Color="#0F172A" Offset="1"/>
+        </LinearGradientBrush>
+
+        <SolidColorBrush x:Key="TextPrimary" Color="White"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#D1D5DB"/>
+        <SolidColorBrush x:Key="CardBackground" Color="White" Opacity="0.3"/>
+        <SolidColorBrush x:Key="DataGridBackground" Color="White" Opacity="0.3"/>
+        <SolidColorBrush x:Key="BorderColor" Color="#475569"/>
+
+        <!-- Стиль для TextBox -->
+        <Style x:Key="DarkTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#1E293B" Opacity="0.4"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                        Background="Transparent"
+                                        Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Стиль для ComboBoxItem (элементы в выпадающем списке) -->
+        <Style x:Key="DarkComboBoxItemStyle" TargetType="ComboBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBoxItem">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{StaticResource BorderColor}"
+                                BorderThickness="0,0,0,1"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="#334155" Opacity="0.5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="#4C46E5" Opacity="0.5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Стиль для ComboBox -->
+        <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#1E293B" Opacity="0.4"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="ItemContainerStyle" Value="{StaticResource DarkComboBoxItemStyle}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border Name="Border"
+                                  Background="{TemplateBinding Background}"
+                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                  BorderThickness="{TemplateBinding BorderThickness}"
+                                  CornerRadius="6"
+                                  SnapsToDevicePixels="True"
+                                  Cursor="Hand">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <ToggleButton Name="ToggleButton"
+                                                Grid.ColumnSpan="2"
+                                                Focusable="False"
+                                                ClickMode="Press"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Cursor="Hand"
+                                                IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent"
+                                                      BorderThickness="0"
+                                                      CornerRadius="6">
+                                                    <ContentPresenter Name="ContentSite"
+                                                                    IsHitTestVisible="False"
+                                                                    Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                    ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                    ContentTemplateSelector="{Binding ItemTemplateSelector, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                                    Margin="3,3,25,3"
+                                                                    VerticalAlignment="Center"
+                                                                    HorizontalAlignment="Left"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                    <ContentPresenter Name="ContentSite"
+                                                    Grid.Column="0"
+                                                    IsHitTestVisible="False"
+                                                    Content="{TemplateBinding SelectionBoxItem}"
+                                                    ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                                    ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                                    Margin="3,3,25,3"
+                                                    VerticalAlignment="Center"
+                                                    HorizontalAlignment="Left"/>
+                                    <TextBox Name="PART_EditableTextBox"
+                                           Grid.Column="0"
+                                           Style="{x:Null}"
+                                           HorizontalAlignment="Stretch"
+                                           VerticalAlignment="Center"
+                                           Margin="3,3,25,3"
+                                           Focusable="True"
+                                           Background="Transparent"
+                                           Foreground="{StaticResource TextPrimary}"
+                                           BorderThickness="0"
+                                           Visibility="Hidden"
+                                           Cursor="Hand"
+                                           IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                                    <ToggleButton Name="ToggleButtonArrow"
+                                                Grid.Column="1"
+                                                Focusable="False"
+                                                ClickMode="Press"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Width="50"
+                                                Cursor="Hand"
+                                                IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Name="ArrowBorder"
+                                                      Background="Transparent"
+                                                      BorderThickness="0"
+                                                      CornerRadius="0,6,6,0"
+                                                      Padding="10,0">
+                                                    <Path HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"
+                                                          Data="M 0 0 L 4 4 L 8 0 Z"
+                                                          Fill="{StaticResource TextPrimary}"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ArrowBorder" Property="Background">
+                                                            <Setter.Value>
+                                                                <SolidColorBrush Color="#475569" Opacity="0.3"/>
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                </Grid>
+                            </Border>
+                            <Popup Name="Popup"
+                                 Placement="Bottom"
+                                 IsOpen="{TemplateBinding IsDropDownOpen}"
+                                 AllowsTransparency="True"
+                                 Focusable="False"
+                                 PopupAnimation="Slide">
+                                <Border Name="DropDownBorder"
+                                      BorderBrush="{StaticResource BorderColor}"
+                                      BorderThickness="1"
+                                      CornerRadius="6"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                                      MinWidth="{TemplateBinding ActualWidth}">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="#1E293B" Opacity="0.95"/>
+                                    </Border.Background>
+                                    <ScrollViewer Margin="4,6,4,6"
+                                                SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True"
+                                                  KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEditable" Value="true">
+                                <Setter Property="IsHitTestVisible" TargetName="PART_EditableTextBox" Value="true"/>
+                                <Setter Property="Visibility" TargetName="PART_EditableTextBox" Value="Visible"/>
+                                <Setter Property="Visibility" TargetName="ContentSite" Value="Hidden"/>
+                                <Setter Property="IsHitTestVisible" TargetName="ToggleButton" Value="false"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Стиль для CalendarDayButton -->
+        <Style x:Key="DarkCalendarDayButtonStyle" TargetType="CalendarDayButton">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#334155" Opacity="0.6"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CalendarDayButton">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="#64748B"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Margin="1">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="#475569" Opacity="0.8"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="#8B5CF6" Opacity="0.9"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsToday" Value="True">
+                                <Setter Property="BorderBrush" Value="#A78BFA"/>
+                                <Setter Property="BorderThickness" Value="2"/>
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <SolidColorBrush Color="#7C3AED" Opacity="0.7"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Стиль для CalendarButton (заголовки месяца/года и дней недели) -->
+        <Style x:Key="DarkCalendarButtonStyle" TargetType="CalendarButton">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="ContentTemplate">
+                <Setter.Value>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding}" 
+                                  Foreground="White" 
+                                  FontWeight="SemiBold" 
+                                  FontSize="14"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"/>
+                    </DataTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CalendarButton">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="4">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Content="{TemplateBinding Content}"
+                                            ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Стиль для Calendar (календарь в DatePicker) -->
+        <Style x:Key="DarkCalendarStyle" TargetType="Calendar">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#334155" Opacity="0.95"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#64748B"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CalendarDayButtonStyle" Value="{StaticResource DarkCalendarDayButtonStyle}"/>
+            <Setter Property="CalendarButtonStyle" Value="{StaticResource DarkCalendarButtonStyle}"/>
+        </Style>
+
+        <!-- Стиль для DatePicker -->
+        <Style x:Key="DarkDatePickerStyle" TargetType="DatePicker">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#1E293B" Opacity="0.4"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="CalendarStyle" Value="{StaticResource DarkCalendarStyle}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DatePicker">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}"
+                                  BorderBrush="{TemplateBinding BorderBrush}"
+                                  BorderThickness="{TemplateBinding BorderThickness}"
+                                  CornerRadius="6"
+                                  SnapsToDevicePixels="True">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <DatePickerTextBox Name="PART_TextBox"
+                                                     Grid.Column="0"
+                                                     Foreground="{TemplateBinding Foreground}"
+                                                     Background="Transparent"
+                                                     BorderThickness="0"
+                                                     Padding="8,6"
+                                                     FontSize="{TemplateBinding FontSize}">
+                                        <DatePickerTextBox.Style>
+                                            <Style TargetType="DatePickerTextBox">
+                                                <Setter Property="Template">
+                                                    <Setter.Value>
+                                                        <ControlTemplate TargetType="DatePickerTextBox">
+                                                            <Border Background="Transparent"
+                                                                  BorderThickness="0"
+                                                                  CornerRadius="6,0,0,6">
+                                                                <ScrollViewer x:Name="PART_ContentHost"
+                                                                            Background="Transparent"
+                                                                            Foreground="{TemplateBinding Foreground}"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Setter.Value>
+                                                </Setter>
+                                            </Style>
+                                        </DatePickerTextBox.Style>
+                                    </DatePickerTextBox>
+                                    <ToggleButton Name="PART_Button"
+                                                Grid.Column="1"
+                                                Focusable="False"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Width="30"
+                                                Cursor="Hand"
+                                                IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource AncestorType=DatePicker}, Mode=TwoWay}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent"
+                                                      BorderThickness="0"
+                                                      CornerRadius="0,6,6,0">
+                                                    <TextBlock HorizontalAlignment="Center"
+                                                              VerticalAlignment="Center"
+                                                              FontSize="16"
+                                                              Foreground="{StaticResource TextPrimary}"
+                                                              Text="📅"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                    </ToggleButton>
+                                </Grid>
+                            </Border>
+                            <Popup Name="PART_Popup"
+                                 Placement="Bottom"
+                                 IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource AncestorType=DatePicker}}"
+                                 AllowsTransparency="True"
+                                 PopupAnimation="Slide"
+                                 StaysOpen="False">
+                                <Border Background="#334155"
+                                      BorderBrush="#64748B"
+                                      BorderThickness="1"
+                                      CornerRadius="6"
+                                      Padding="4"
+                                      Opacity="0.98">
+                                    <Calendar Name="PART_Calendar"
+                                            Style="{StaticResource DarkCalendarStyle}"
+                                            SelectedDate="{Binding SelectedDate, RelativeSource={RelativeSource AncestorType=DatePicker}, Mode=TwoWay}"
+                                            DisplayDate="{Binding SelectedDate, RelativeSource={RelativeSource AncestorType=DatePicker}}"/>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding SelectedDate, RelativeSource={RelativeSource AncestorType=DatePicker}}" Value="{x:Null}">
+                                <Setter TargetName="PART_TextBox" Property="Text" Value=""/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Стиль для кнопок -->
+        <Style x:Key="DarkButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#4B5563" Opacity="0.6"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                        CornerRadius="6"
+                        Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#6B7280" Opacity="0.8"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для акцентных кнопок (как в других окнах) -->
+        <Style x:Key="AccentButton" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#8B5CF6"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#A78BFA"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <LinearGradientBrush x:Key="OrangeRedGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F97316" Offset="0"/>
+            <GradientStop Color="#EA580C" Offset="1"/>
+        </LinearGradientBrush>
+
+        <Style x:Key="OrangeRedButton" TargetType="Button" BasedOn="{StaticResource DarkButtonStyle}">
+            <Setter Property="Background" Value="{StaticResource OrangeRedGradient}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FB923C" Offset="0"/>
+                                <GradientStop Color="#F97316" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для кнопок управления окном -->
+        <Style x:Key="WindowControlButton" TargetType="Button">
+            <Setter Property="Width" Value="45"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="White" Opacity="0.1"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="CloseButtonStyle" TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#E81123"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{StaticResource AppBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Custom TitleBar -->
+        <Border Grid.Row="0" Background="#312E81" Height="30" MouseDown="TitleBar_MouseDown">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" 
+                          Text="Создание договора" 
+                          Foreground="White" 
+                          VerticalAlignment="Center" 
+                          Margin="10,0,0,0"
+                          FontSize="14"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="─" Style="{StaticResource WindowControlButton}" Click="MinimizeButton_Click"/>
+                    <Button x:Name="MaximizeRestoreButton" Content="□" Style="{StaticResource WindowControlButton}" Click="MaximizeButton_Click"/>
+                    <Button Content="✕" Style="{StaticResource CloseButtonStyle}" Click="CloseButton_Click"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" 
+                                  Text="Тип договора:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <ComboBox Grid.Row="0" Grid.Column="1" 
+                                 x:Name="ContractTypeComboBox" 
+                                 DisplayMemberPath="Name" 
+                                 Margin="0,5" 
+                                 SelectionChanged="ContractTypeComboBox_SelectionChanged"
+                                 IsEditable="True"
+                                 IsTextSearchEnabled="True"
+                                 TextSearch.TextPath="Name"
+                                 StaysOpenOnEdit="True"
+                                 Style="{StaticResource DarkComboBoxStyle}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" 
+                                  Text="Номер договора:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" 
+                                x:Name="ContractNumberTextBox" 
+                                Margin="0,5"
+                                Style="{StaticResource DarkTextBoxStyle}"/>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" 
+                                  Text="Дата договора:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <DatePicker Grid.Row="2" Grid.Column="1" 
+                                   x:Name="ContractDatePicker" 
+                                   Margin="0,5"
+                                   Style="{StaticResource DarkDatePickerStyle}"
+                                   SelectedDateChanged="ContractDatePicker_SelectedDateChanged"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" 
+                                  Text="Программа обучения:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <ComboBox Grid.Row="3" Grid.Column="1" 
+                                 x:Name="ProgramComboBox" 
+                                 DisplayMemberPath="Name" 
+                                 Margin="0,5"
+                                 IsEditable="True"
+                                 IsTextSearchEnabled="True"
+                                 TextSearch.TextPath="Name"
+                                 StaysOpenOnEdit="True"
+                                 Style="{StaticResource DarkComboBoxStyle}"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" 
+                                  Text="Дата начала:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <DatePicker Grid.Row="4" Grid.Column="1" 
+                                   x:Name="StartDatePicker" 
+                                   Margin="0,5"
+                                   Style="{StaticResource DarkDatePickerStyle}"/>
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" 
+                                  Text="Дата окончания:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <DatePicker Grid.Row="5" Grid.Column="1" 
+                                   x:Name="EndDatePicker" 
+                                   Margin="0,5"
+                                   Style="{StaticResource DarkDatePickerStyle}"/>
+
+                        <TextBlock Grid.Row="6" Grid.Column="0" 
+                                  Text="Заказчик:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <ComboBox Grid.Row="6" Grid.Column="1" 
+                                 x:Name="PayerComboBox" 
+                                 Margin="0,5"
+                                 IsEditable="True"
+                                 IsTextSearchEnabled="True"
+                                 Style="{StaticResource DarkComboBoxStyle}"/>
+
+                        <TextBlock Grid.Row="7" Grid.Column="0" 
+                                  Text="Слушатель:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <ComboBox Grid.Row="7" Grid.Column="1" 
+                                 x:Name="ListenerComboBox" 
+                                 Margin="0,5"
+                                 IsEditable="True"
+                                 IsTextSearchEnabled="True"
+                                 Style="{StaticResource DarkComboBoxStyle}"/>
+
+                        <TextBlock Grid.Row="8" Grid.Column="0" 
+                                  Text="Подписант:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <ComboBox Grid.Row="8" Grid.Column="1" 
+                                 x:Name="SignerComboBox" 
+                                 DisplayMemberPath="Name" 
+                                 Margin="0,5"
+                                 Style="{StaticResource DarkComboBoxStyle}"/>
+
+                        <TextBlock Grid.Row="9" Grid.Column="0" 
+                                  Text="Вариант оплаты:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <ComboBox Grid.Row="9" Grid.Column="1" 
+                                 x:Name="PaymentOptionComboBox" 
+                                 DisplayMemberPath="Name" 
+                                 Margin="0,5"
+                                 Style="{StaticResource DarkComboBoxStyle}"/>
+
+                        <TextBlock Grid.Row="10" Grid.Column="0" 
+                                  x:Name="StudyOptionLabel"
+                                  Text="Учебная нагрузка:" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"/>
+                        <ComboBox Grid.Row="10" Grid.Column="1" 
+                                 x:Name="StudyOptionComboBox" 
+                                 DisplayMemberPath="Name" 
+                                 Margin="0,5"
+                                 Style="{StaticResource DarkComboBoxStyle}"/>
+
+                        <!-- Поля для типа договора ПК (скрыты по умолчанию) -->
+                        <TextBlock Grid.Row="11" Grid.Column="0" 
+                                  x:Name="ItogDocumentLabel"
+                                  Text="Итоговый документ (1.4):" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"
+                                  Visibility="Collapsed"/>
+                        <ComboBox Grid.Row="11" Grid.Column="1" 
+                                 x:Name="ItogDocumentComboBox" 
+                                 DisplayMemberPath="Name" 
+                                 Margin="0,5"
+                                 Style="{StaticResource DarkComboBoxStyle}"
+                                 Visibility="Collapsed"/>
+
+                        <TextBlock Grid.Row="12" Grid.Column="0" 
+                                  x:Name="TimeOptionLabel"
+                                  Text="Учебная нагрузка (1.5):" 
+                                  VerticalAlignment="Center" 
+                                  Margin="0,10"
+                                  Foreground="{StaticResource TextPrimary}"
+                                  Visibility="Collapsed"/>
+                        <ComboBox Grid.Row="12" Grid.Column="1" 
+                                 x:Name="TimeOptionComboBox" 
+                                 DisplayMemberPath="Name" 
+                                 Margin="0,5"
+                                 Style="{StaticResource DarkComboBoxStyle}"
+                                 Visibility="Collapsed"/>
+
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+            <StackPanel Grid.Row="1" 
+                       Orientation="Horizontal" 
+                       HorizontalAlignment="Right" 
+                       Margin="0,20,0,0">
+                <Button x:Name="CreateContractButton" 
+                       Content="Создать договор" 
+                       Style="{StaticResource DarkButtonStyle}"
+                       Margin="0,0,10,0" 
+                       Click="CreateContractButton_Click"/>
+                <Button x:Name="CancelButton" 
+                       Content="Отмена" 
+                       Style="{StaticResource DarkButtonStyle}"
+                       Click="CancelButton_Click"/>
+        </StackPanel>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

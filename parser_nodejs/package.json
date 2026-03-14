@@ -1,0 +1,22 @@
+{
+  "name": "25-12-parser",
+  "version": "1.0.0",
+  "description": "Парсер программ с сайта 25-12.ru через WordPress REST API",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "parse": "node parser.js",
+    "import": "node import-to-db.js",
+    "test": "node test.js"
+  },
+  "keywords": ["parser", "wordpress", "api"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.0.0",
+    "pg": "^8.11.0"
+  }
+}

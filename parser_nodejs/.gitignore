@@ -1,0 +1,22 @@
+# Node modules
+node_modules/
+
+# Результаты парсинга
+programs.json
+programs_full.json
+
+# Логи
+*.log
+npm-debug.log*
+
+# Временные файлы
+*.tmp
+*.temp
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

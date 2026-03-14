@@ -1,0 +1,100 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Триггер на теги типа v1.0.0, v1.1.0 и т.д.
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Install Squirrel CLI
+      run: |
+        # Скачиваем Squirrel CLI из NuGet пакета
+        nuget install Clowd.Squirrel -Version 2.11.1 -OutputDirectory tools
+        # Добавляем в PATH
+        $squirrelPath = (Get-ChildItem -Path "tools/Clowd.Squirrel.*/tools" -Recurse -Directory | Select-Object -First 1).FullName
+        echo $squirrelPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      shell: pwsh
+      
+    - name: Restore dependencies
+      run: dotnet restore Contract2512.csproj
+      
+    - name: Create .env file
+      run: |
+        @"
+        # GitHub Auto-Update Settings
+        GITHUB_OWNER=Fotters05
+        GITHUB_REPO=contracts2512
+        "@ | Out-File -FilePath .env -Encoding UTF8
+      shell: pwsh
+      
+    - name: Build and Publish
+      run: dotnet publish Contract2512.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=false
+      
+    - name: Get version from tag
+      id: get_version
+      run: |
+        $version = "${{ github.ref_name }}".TrimStart('v')
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+      shell: pwsh
+      
+    - name: Create Squirrel Release
+      run: |
+        # Находим squirrel.exe
+        $squirrelExe = Get-ChildItem -Path "tools" -Filter "squirrel.exe" -Recurse | Select-Object -First 1
+        & $squirrelExe.FullName pack `
+          --packId Contract2512 `
+          --packVersion ${{ steps.get_version.outputs.VERSION }} `
+          --packDirectory bin/Release/net8.0-windows/win-x64/publish `
+          --releaseDir releases `
+          --icon progaico.ico `
+          --appIcon progaico.ico `
+          --splashImage splash.png `
+          --allowUnaware
+      shell: pwsh
+      
+    - name: List created files
+      run: |
+        Write-Host "Содержимое папки releases:" -ForegroundColor Cyan
+        Get-ChildItem -Path releases -Recurse | Format-Table Name, Length
+      shell: pwsh
+      
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          releases/*Setup.exe
+          releases/*.nupkg
+          releases/RELEASES
+        body: |
+          ## 🎉 Версия ${{ steps.get_version.outputs.VERSION }}
+          
+          ### Установка:
+          1. Скачайте установщик (Setup.exe)
+          2. Запустите установщик
+          3. Приложение автоматически установится и создаст ярлыки
+          
+          ### Обновление:
+          Если у вас уже установлена предыдущая версия - просто запустите приложение, оно автоматически предложит обновиться.
+          
+          ### Что нового:
+          - Настроена система автоматического обновления
+          - Улучшения производительности
+          - Исправления ошибок
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

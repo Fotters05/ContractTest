@@ -1,0 +1,1007 @@
+﻿<ui:FluentWindow x:Class="Contract2512.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:local="clr-namespace:Contract2512"
+        mc:Ignorable="d"
+        Title="Система управления договорами"
+        WindowStartupLocation="CenterScreen"
+        Height="700"
+        Width="1400"
+        ExtendsContentIntoTitleBar="True">
+
+    <!-- 🎨 Цвета и стиль из картинки -->
+    <Window.Resources>
+
+        <DropShadowEffect x:Key="CardShadow"
+                  Color="#000000"
+                  Opacity="0.45"
+                  BlurRadius="25"
+                  ShadowDepth="4"/>
+        
+        <!-- Градиентный фиолетово-синий фон -->
+        <LinearGradientBrush x:Key="AppBackground" StartPoint="0 0" EndPoint="1 1">
+            <GradientStop Color="#1E1B4B" Offset="0"/>
+            <GradientStop Color="#0F172A" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Полупрозрачная стеклянная панель -->
+        <SolidColorBrush x:Key="GlassPanel" Color="#3A3A6A" Opacity="0.15"/>
+        <SolidColorBrush x:Key="GlassPanelHover" Color="#5151A1" Opacity="0.45"/>
+
+        <!-- Акцентные цвета -->
+        <SolidColorBrush x:Key="AccentColor" Color="#8B5CF6"/>
+        <SolidColorBrush x:Key="AccentColorLight" Color="#A78BFA"/>
+
+        <SolidColorBrush x:Key="TextPrimary" Color="White"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#D1D5DB"/>
+
+        <!-- Стиль кнопок-«пилюль» -->
+        <Style x:Key="AccentButton" TargetType="Button">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Background" Value="#8B5CF6"/>
+            <Setter Property="Padding" Value="16,10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="8"
+                                SnapsToDevicePixels="True"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="#000000" Opacity="0.3" ShadowDepth="3" BlurRadius="10"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect Color="#000000" Opacity="0.4" ShadowDepth="2" BlurRadius="15"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль пунктов меню -->
+        <Style x:Key="MenuItemStyle" TargetType="Border">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="14,12"/>
+            <Setter Property="Margin" Value="4,2"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="Tag" Value="Selected">
+                    <Setter Property="Background" Value="#4C46E5"/>
+                </Trigger>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#5754E3"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Градиент для фиолетовой кнопки -->
+        <LinearGradientBrush x:Key="PurpleGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#8B5CF6" Offset="0"/>
+            <GradientStop Color="#7C3AED" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <!-- Градиент для красно-оранжевой кнопки -->
+        <LinearGradientBrush x:Key="OrangeRedGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#F97316" Offset="0"/>
+            <GradientStop Color="#EA580C" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Стили кнопок разных цветов -->
+        <Style x:Key="PurpleButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
+            <Setter Property="Background" Value="{StaticResource PurpleGradient}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#A78BFA" Offset="0"/>
+                                <GradientStop Color="#8B5CF6" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Темно-серая кнопка для Редактировать и Удалить с прозрачностью -->
+        <Style x:Key="DarkGrayButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#4B5563" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#6B7280" Opacity="0.8"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Красно-оранжевая кнопка для Создать договор -->
+        <Style x:Key="OrangeRedButton" TargetType="Button" BasedOn="{StaticResource AccentButton}">
+            <Setter Property="Background" Value="{StaticResource OrangeRedGradient}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                <GradientStop Color="#FB923C" Offset="0"/>
+                                <GradientStop Color="#F97316" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Полупрозрачный фон для DataGrid -->
+        <SolidColorBrush x:Key="DataGridBackground" Color="#1E293B" Opacity="0.3"/>
+        <SolidColorBrush x:Key="DataGridRowBackground" Color="#1E293B" Opacity="0.3"/>
+        <SolidColorBrush x:Key="DataGridAlternatingRowBackground" Color="#0F172A" Opacity="0.3"/>
+        
+        <!-- Стиль для DataGrid в темной теме -->
+        <Style x:Key="DarkDataGridStyle" TargetType="DataGrid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="RowBackground" Value="{StaticResource DataGridRowBackground}"/>
+            <Setter Property="AlternatingRowBackground" Value="{StaticResource DataGridAlternatingRowBackground}"/>
+            <Setter Property="GridLinesVisibility" Value="All"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+
+        <Style x:Key="DarkDataGridColumnHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#334155" Opacity="0.3"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="BorderBrush" Value="#475569"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+        </Style>
+
+        <Style x:Key="DarkDataGridCellStyle" TargetType="DataGridCell">
+            <Setter Property="BorderBrush" Value="#475569"/>
+            <Setter Property="BorderThickness" Value="0,0,1,1"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style x:Key="DarkDataGridRowStyle" TargetType="DataGridRow">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#334155" Opacity="0.3"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#4C46E5" Opacity="0.3"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для кнопок управления окном -->
+        <Style x:Key="WindowControlButton" TargetType="Button">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#FFFFFF" Opacity="0.1"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для кнопки закрытия -->
+        <Style x:Key="CloseButtonStyle" TargetType="Button" BasedOn="{StaticResource WindowControlButton}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background">
+                        <Setter.Value>
+                            <SolidColorBrush Color="#EF4444" Opacity="0.8"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Стиль для текстового поля -->
+        <SolidColorBrush x:Key="BorderColor" Color="#64748B"/>
+        <Style x:Key="DarkTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background">
+                <Setter.Value>
+                    <SolidColorBrush Color="#1E293B" Opacity="0.4"/>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,6"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                        Background="Transparent"
+                                        Foreground="{TemplateBinding Foreground}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <!-- 🎨 Общий стеклянный фон окна -->
+    <Grid Background="{StaticResource AppBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Кастомный TitleBar с кнопками управления окном -->
+        <Grid Grid.Row="0" Background="Transparent" MouseDown="TitleBar_MouseDown">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <!-- Заголовок окна (невидимый, но для перетаскивания) -->
+            <TextBlock Grid.Column="0" 
+                      Text="Система управления договорами"
+                      Foreground="Transparent"
+                      VerticalAlignment="Center"
+                      Margin="12,0"/>
+            
+            <!-- Кнопки управления окном -->
+            <StackPanel Grid.Column="1" 
+                       Orientation="Horizontal"
+                       Background="Transparent">
+                <!-- Кнопка свернуть -->
+                <Button x:Name="MinimizeButton"
+                       Style="{StaticResource WindowControlButton}"
+                       Click="MinimizeButton_Click"
+                       ToolTip="Свернуть">
+                    <TextBlock Text="─" 
+                              FontSize="16"
+                              FontWeight="Bold"
+                              Foreground="{StaticResource TextPrimary}" Height="22"/>
+                </Button>
+                
+                <!-- Кнопка развернуть/восстановить -->
+                <Button x:Name="MaximizeButton"
+                       Style="{StaticResource WindowControlButton}"
+                       Click="MaximizeButton_Click"
+                       ToolTip="Развернуть">
+                    <TextBlock x:Name="MaximizeIcon"
+                              Text="□" 
+                              FontSize="20"
+                              FontWeight="Bold"
+                              Foreground="{StaticResource TextPrimary}" Height="32"/>
+                </Button>
+                
+                <!-- Кнопка закрыть -->
+                <Button x:Name="CloseButton"
+                       Style="{StaticResource CloseButtonStyle}"
+                       Click="CloseButton_Click"
+                       ToolTip="Закрыть">
+                    <TextBlock Text="✕" 
+                              FontSize="16"
+                              FontWeight="Bold"
+                              Foreground="{StaticResource TextPrimary}"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+        
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250"/>
+                <!-- Левое меню -->
+                <ColumnDefinition Width="*"/>
+                <!-- Контент -->
+            </Grid.ColumnDefinitions>
+
+        <!-- ⚡ ЛЕВОЕ СТЕКЛЯННОЕ МЕНЮ (как на картинке) -->
+        <Border Grid.Column="0"
+                Background="{StaticResource GlassPanel}"
+                CornerRadius="0"
+                BorderBrush="#5B21B6"
+                BorderThickness="0,0,1,0"
+                Padding="20" Margin="0,-32,0,0">
+
+            <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0"
+                           Text="Система управления договорами"
+                           FontSize="20"
+                           Foreground="White"
+                           FontWeight="SemiBold"
+                           Margin="4 0 0 24"
+                           TextWrapping="Wrap"/>
+
+                <StackPanel Grid.Row="1">
+                    <!-- Физические лица -->
+                    <Border x:Name="BtnPersons"
+                            Style="{StaticResource MenuItemStyle}"
+                            MouseLeftButtonDown="BtnPersons_Click">
+                        <TextBlock Text="👥  Физические лица"
+                                   FontSize="16"
+                                   Foreground="{StaticResource TextPrimary}"/>
+                    </Border>
+
+                    <!-- Договоры -->
+                    <Border x:Name="BtnContracts"
+                            Style="{StaticResource MenuItemStyle}"
+                            MouseLeftButtonDown="BtnContracts_Click">
+                        <TextBlock Text="📄  Договоры"
+                                   FontSize="16"
+                                   Foreground="{StaticResource TextPrimary}"/>
+                    </Border>
+
+                    <!-- Программы -->
+                    <Border x:Name="BtnPrograms"
+                            Style="{StaticResource MenuItemStyle}"
+                            MouseLeftButtonDown="BtnPrograms_Click">
+                        <TextBlock Text="📚  Программы"
+                                   FontSize="16"
+                                   Foreground="{StaticResource TextPrimary}"/>
+                    </Border>
+
+                    <!-- Типы договоров -->
+                    <Border x:Name="BtnContractTypes"
+                            Style="{StaticResource MenuItemStyle}"
+                            MouseLeftButtonDown="BtnContractTypes_Click">
+                        <TextBlock Text="📋  Типы договоров"
+                                   FontSize="16"
+                                   Foreground="{StaticResource TextPrimary}"/>
+                    </Border>
+
+                    <!-- Организации -->
+                    <Border x:Name="BtnOrganizations"
+                            Style="{StaticResource MenuItemStyle}"
+                            MouseLeftButtonDown="BtnOrganizations_Click">
+                        <TextBlock Text="🏢  Организации"
+                                   FontSize="16"
+                                   Foreground="{StaticResource TextPrimary}"/>
+                    </Border>
+
+                    <!-- Учебная нагрузка -->
+                    <Border x:Name="BtnWorkload"
+                            Style="{StaticResource MenuItemStyle}"
+                            MouseLeftButtonDown="BtnWorkload_Click">
+                        <TextBlock Text="📊  Учебная нагрузка"
+                                   FontSize="16"
+                                   Foreground="{StaticResource TextPrimary}"/>
+                    </Border>
+                </StackPanel>
+
+                <!-- Тех поддержка -->
+                <Border Grid.Row="2"
+                        x:Name="BtnSupport"
+                        Style="{StaticResource MenuItemStyle}"
+                        MouseLeftButtonDown="BtnSupport_Click"
+                        Margin="0,20,0,0">
+                    <TextBlock Text="💬  Тех поддержка"
+                               FontSize="16"
+                               Foreground="{StaticResource TextPrimary}"/>
+                </Border>
+
+                <!-- Настройки -->
+                <Border Grid.Row="3"
+                        x:Name="BtnSettings"
+                        Style="{StaticResource MenuItemStyle}"
+                        MouseLeftButtonDown="BtnSettings_Click"
+                        Margin="0,10,0,0">
+                    <TextBlock Text="⚙  Настройки"
+                               FontSize="16"
+                               Foreground="{StaticResource TextPrimary}"/>
+                </Border>
+            </Grid>
+
+        </Border>
+
+        <!-- Контент-панель -->
+        <Grid Grid.Column="1" x:Name="ContentRoot" Margin="20">
+            <!-- Физические лица -->
+            <Grid x:Name="PersonsPanel" Visibility="Visible">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                <!-- Панель кнопок -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                    <Button Content="Добавить лицо" 
+                           x:Name="AddPersonButton" 
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="AddPersonButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Редактировать" 
+                           x:Name="EditPersonButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="EditPersonButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Удалить" 
+                           x:Name="DeletePersonButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="DeletePersonButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Создать договор" 
+                           x:Name="CreateContractForPersonButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="CreateContractForPersonButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Просмотр договоров" 
+                           x:Name="ViewPersonContractsButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="ViewPersonContractsButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Просмотр личных карточек" 
+                           x:Name="ViewPersonCardsButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="ViewPersonCardsButton_Click"/>
+                    </StackPanel>
+
+                <!-- DataGrid -->
+                <Border Grid.Row="1" 
+                       x:Name="PersonsDataGridBorder"
+                       Background="{StaticResource DataGridBackground}"
+                       CornerRadius="12"
+                       BorderBrush="#475569"
+                       BorderThickness="1"
+                       ClipToBounds="True"
+                       SizeChanged="PersonsDataGridBorder_SizeChanged"
+                       Effect="{StaticResource CardShadow}">
+                    <DataGrid x:Name="PersonsDataGrid" 
+                             Style="{StaticResource DarkDataGridStyle}"
+                             ClipToBounds="True"
+                             MouseDoubleClick="PersonsDataGrid_MouseDoubleClick" SelectionChanged="PersonsDataGrid_SelectionChanged">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DarkDataGridColumnHeaderStyle}"/>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DarkDataGridCellStyle}"/>
+                        </DataGrid.CellStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DarkDataGridRowStyle}"/>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="ФИО" Binding="{Binding FullName}" Width="*"/>
+                            <DataGridTextColumn Header="Дата рождения" Binding="{Binding DateOfBirth, StringFormat=\{0:dd.MM.yyyy\}}" Width="120"/>
+                            <DataGridTextColumn Header="СНИЛС" Binding="{Binding Snils}" Width="120"/>
+                            <DataGridTextColumn Header="ИНН" Binding="{Binding Inn}" Width="120"/>
+                            <DataGridTextColumn Header="Телефон" Binding="{Binding Contacts.ContactPhone}" Width="150"/>
+                            <DataGridTextColumn Header="Email" Binding="{Binding Contacts.Email}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+                </Grid>
+
+            <!-- Договоры -->
+            <Grid x:Name="ContractsPanel" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                <!-- Панель кнопок и поиска -->
+                <Grid Grid.Row="0" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <Button Content="Создать договор" 
+                               x:Name="CreateContractButton"
+                               Style="{StaticResource DarkGrayButton}"
+                               Click="CreateContractButton_Click"
+                               Margin="0,0,8,0"/>
+                            <Button Content="Просмотреть" 
+                               x:Name="ViewContractButton"
+                               Style="{StaticResource DarkGrayButton}"
+                               Click="ViewContractButton_Click"/>
+                    </StackPanel>
+                    <TextBox Grid.Column="1" 
+                            x:Name="ContractSearchTextBox"
+                            Style="{StaticResource DarkTextBoxStyle}"
+                            Margin="8,0,0,0"
+                            TextChanged="ContractSearchTextBox_TextChanged">
+                        <TextBox.ToolTip>
+                            <ToolTip Content="Поиск по номеру договора"/>
+                        </TextBox.ToolTip>
+                    </TextBox>
+                </Grid>
+
+                <!-- DataGrid -->
+                    <Border Grid.Row="1" 
+                       x:Name="ContractsDataGridBorder"
+                       Background="{StaticResource DataGridBackground}"
+                       CornerRadius="12"
+                       BorderBrush="#475569"
+                       BorderThickness="1"
+                       ClipToBounds="True"
+                       SizeChanged="ContractsDataGridBorder_SizeChanged"
+                       Effect="{StaticResource CardShadow}">
+                        <DataGrid x:Name="ContractsDataGrid" 
+                             Style="{StaticResource DarkDataGridStyle}"
+                             ClipToBounds="True">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DarkDataGridColumnHeaderStyle}"/>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DarkDataGridCellStyle}"/>
+                        </DataGrid.CellStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DarkDataGridRowStyle}"/>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Номер" Binding="{Binding ContractNumber}" Width="150"/>
+                            <DataGridTextColumn Header="Дата" Binding="{Binding ContractDate, StringFormat=\{0:dd.MM.yyyy\}}" Width="100"/>
+                            <DataGridTextColumn Header="Тип договора" Binding="{Binding ContractType.Name}" Width="*"/>
+                            <DataGridTextColumn Header="Программа" Binding="{Binding Program.Name}" Width="*"/>
+                            <DataGridTextColumn Header="Заказчик" Binding="{Binding Payer.FullName}" Width="*"/>
+                            <DataGridTextColumn Header="Слушатель" Binding="{Binding Listener.FullName}" Width="*"/>
+                            <DataGridTextColumn Header="Дата начала" Binding="{Binding StartDate, StringFormat=\{0:dd.MM.yyyy\}}" Width="100"/>
+                            <DataGridTextColumn Header="Дата окончания" Binding="{Binding EndDate, StringFormat=\{0:dd.MM.yyyy\}}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+                </Grid>
+
+            <!-- Программы -->
+            <Grid x:Name="ProgramsPanel" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                <!-- Панель кнопок -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                    <Button Content="Добавить программу" 
+                           x:Name="AddProgramButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="AddProgramButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Редактировать" 
+                           x:Name="EditProgramButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="EditProgramButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Удалить" 
+                           x:Name="DeleteProgramButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="DeleteProgramButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Подробнее" 
+                           x:Name="ViewProgramDetailsButton"
+                           Style="{StaticResource PurpleButton}"
+                           Click="ViewProgramDetailsButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Загрузить программы с сайта" 
+                           x:Name="ImportProgramsButton"
+                           Style="{StaticResource OrangeRedButton}"
+                           Click="ImportProgramsButton_Click"/>
+                    </StackPanel>
+
+                <!-- Карточки программ -->
+                <ScrollViewer Grid.Row="1" 
+                             VerticalScrollBarVisibility="Auto" 
+                             HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl x:Name="ProgramsItemsControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                <Border Width="280" 
+                                       Margin="0,0,16,16"
+                                       Cursor="Hand"
+                                       MouseLeftButtonDown="ProgramCard_MouseLeftButtonDown"
+                                       Tag="{Binding}"
+                                       Background="#1E293B"
+                                       CornerRadius="12"
+                                       BorderBrush="#475569"
+                                       BorderThickness="1"
+                                       Opacity="0.8"
+                                       Effect="{StaticResource CardShadow}">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                            <RowDefinition Height="200"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- CheckBox в правом верхнем углу -->
+                                        <Border Grid.Row="0" 
+                                               HorizontalAlignment="Right" 
+                                               VerticalAlignment="Top" 
+                                               Margin="8" 
+                                               Background="White" 
+                                               CornerRadius="6" 
+                                               Opacity="0.95">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#000000" 
+                                                                Direction="270" 
+                                                                ShadowDepth="1" 
+                                                                Opacity="0.2" 
+                                                                BlurRadius="4"/>
+                                            </Border.Effect>
+                                                <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" 
+                                                         Click="ProgramCheckBox_Click"
+                                                     Tag="{Binding}"
+                                                     Margin="4"/>
+                                            </Border>
+
+                                            <!-- Изображение -->
+                                        <Border Grid.Row="0" 
+                                               Background="#0F172A" 
+                                               CornerRadius="12,12,0,0"
+                                               Margin="0,0,0,12">
+                                                <Grid>
+                                                <Image Source="{Binding ImagePath}" 
+                                                      Height="180" 
+                                                      Stretch="Uniform"
+                                                      Margin="8">
+                                                        <Image.Style>
+                                                            <Style TargetType="Image">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding ImagePath}" Value="{x:Null}">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Image.Style>
+                                                    </Image>
+                                                <TextBlock Text="Нет изображения" 
+                                                          HorizontalAlignment="Center" 
+                                                          VerticalAlignment="Center" 
+                                                          Foreground="{StaticResource TextSecondary}"
+                                                          FontSize="14"
+                                                          Visibility="Collapsed">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding ImagePath}" Value="{x:Null}">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </Border>
+
+                                            <!-- Контент -->
+                                        <StackPanel Grid.Row="1" Margin="12,0,12,12">
+                                            <TextBlock Text="{Binding Name}" 
+                                                      FontWeight="SemiBold" 
+                                                      FontSize="16" 
+                                                      TextWrapping="Wrap"
+                                                      Foreground="{StaticResource TextPrimary}"
+                                                      Margin="0,0,0,6"/>
+                                            <TextBlock FontSize="13" Margin="0,0,0,6" Foreground="{StaticResource TextSecondary}">
+                                                <Run Text="Вид программы: " FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                                                    <Run Text="{Binding ProgramViewName}"/>
+                                                </TextBlock>
+                                            <TextBlock Text="{Binding Format}" 
+                                                      FontSize="13" 
+                                                      Foreground="{StaticResource TextSecondary}"
+                                                      Margin="0,0,0,6"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                                <TextBlock Foreground="{StaticResource TextSecondary}">
+                                                    <Run Text="Часы: " FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                                                    <Run Text="{Binding Hours}"/>
+                                                </TextBlock>
+                                                <TextBlock Margin="12,0,0,0" Foreground="{StaticResource TextSecondary}">
+                                                    <Run Text="Уроки: " FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}"/>
+                                                    <Run Text="{Binding LessonsCount}"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                            <TextBlock FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}">
+                                                    <Run Text="Цена: "/>
+                                                    <Run Text="{Binding Price, StringFormat=\{0:N2\}}"/>
+                                                <Run Text=" ₽"/>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+
+            <!-- Типы договоров -->
+            <Grid x:Name="ContractTypesPanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Панель кнопок -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                    <Button Content="Добавить тип" 
+                           x:Name="AddContractTypeButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="AddContractTypeButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Редактировать" 
+                           x:Name="EditContractTypeButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="EditContractTypeButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Удалить" 
+                           x:Name="DeleteContractTypeButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="DeleteContractTypeButton_Click"/>
+                </StackPanel>
+
+                <!-- DataGrid -->
+                <Border Grid.Row="1" 
+                       x:Name="ContractTypesDataGridBorder"
+                       Background="{StaticResource DataGridBackground}"
+                       CornerRadius="12"
+                       BorderBrush="#475569"
+                       BorderThickness="1"
+                       ClipToBounds="True"
+                       SizeChanged="ContractTypesDataGridBorder_SizeChanged"
+                       Effect="{StaticResource CardShadow}">
+                    <DataGrid x:Name="ContractTypesDataGrid" 
+                             Style="{StaticResource DarkDataGridStyle}"
+                             ClipToBounds="True">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DarkDataGridColumnHeaderStyle}"/>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DarkDataGridCellStyle}"/>
+                        </DataGrid.CellStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DarkDataGridRowStyle}"/>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Название" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="Путь к файлу" Binding="{Binding FilePath}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+
+            <!-- Организации -->
+            <Grid x:Name="OrganizationsPanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Панель кнопок -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+                    <Button Content="Добавить организацию" 
+                           x:Name="AddOrganizationButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="AddOrganizationButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Редактировать" 
+                           x:Name="EditOrganizationButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="EditOrganizationButton_Click"
+                           Margin="0,0,8,0"/>
+                    <Button Content="Удалить" 
+                           x:Name="DeleteOrganizationButton"
+                           Style="{StaticResource DarkGrayButton}"
+                           Click="DeleteOrganizationButton_Click"/>
+                </StackPanel>
+
+                <!-- DataGrid -->
+                <Border Grid.Row="1" 
+                       x:Name="OrganizationsDataGridBorder"
+                       Background="{StaticResource DataGridBackground}"
+                       CornerRadius="12"
+                       BorderBrush="#475569"
+                       BorderThickness="1"
+                       ClipToBounds="True"
+                       SizeChanged="OrganizationsDataGridBorder_SizeChanged"
+                       Effect="{StaticResource CardShadow}">
+                    <DataGrid x:Name="OrganizationsDataGrid" 
+                             Style="{StaticResource DarkDataGridStyle}"
+                             ClipToBounds="True">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DarkDataGridColumnHeaderStyle}"/>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource DarkDataGridCellStyle}"/>
+                        </DataGrid.CellStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource DarkDataGridRowStyle}"/>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Название организации" Binding="{Binding OrganizationName}" Width="*"/>
+                            <DataGridTextColumn Header="Директор" Binding="{Binding DirectorFio}" Width="*"/>
+                            <DataGridTextColumn Header="ОГРН" Binding="{Binding Ogrn}" Width="140"/>
+                            <DataGridTextColumn Header="ИНН" Binding="{Binding Inn}" Width="120"/>
+                            <DataGridTextColumn Header="КПП" Binding="{Binding Kpp}" Width="110"/>
+                            <DataGridTextColumn Header="Телефон" Binding="{Binding Phone}" Width="150"/>
+                            <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+
+            <!-- Учебная нагрузка -->
+            <Grid x:Name="WorkloadPanel" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0,0,0,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Учебная нагрузка"
+                                  FontSize="28"
+                                  FontWeight="SemiBold"
+                                  Foreground="{StaticResource TextPrimary}"
+                                  Margin="0,0,0,10"/>
+                        <TextBlock Text="Формирование расписания занятий по программам обучения"
+                                  FontSize="16"
+                                  Foreground="{StaticResource TextSecondary}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                HorizontalAlignment="Right">
+                        <Button Content="Сформировать учебную нагрузку"
+                               x:Name="CreateWorkloadButton"
+                               Style="{StaticResource DarkGrayButton}"
+                               Click="CreateWorkloadButton_Click"
+                               Padding="24,12"
+                               Margin="0,0,12,0"/>
+                        <Button Content="Календарь нерабочих дней"
+                               x:Name="OpenHolidayCalendarButton"
+                               Style="{StaticResource DarkGrayButton}"
+                               Click="OpenHolidayCalendarButton_Click"
+                               Padding="24,12"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Список сформированных документов -->
+                <Border Grid.Row="1"
+                       x:Name="WorkloadDocumentsDataGridBorder"
+                       Background="{StaticResource DataGridBackground}"
+                       CornerRadius="12"
+                       BorderBrush="#475569"
+                       BorderThickness="1"
+                       ClipToBounds="True"
+                       SizeChanged="WorkloadDocumentsDataGridBorder_SizeChanged"
+                       Effect="{StaticResource CardShadow}">
+                    <Grid Margin="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0"
+                                   Orientation="Horizontal"
+                                   Margin="0,0,0,16">
+                            <Button Content="Открыть файл"
+                                   x:Name="OpenWorkloadDocumentButton"
+                                   Style="{StaticResource DarkGrayButton}"
+                                   Click="OpenWorkloadDocumentButton_Click"
+                                   Margin="0,0,8,0"/>
+                            <Button Content="Обновить список"
+                                   x:Name="RefreshWorkloadDocumentsButton"
+                                   Style="{StaticResource DarkGrayButton}"
+                                   Click="RefreshWorkloadDocumentsButton_Click"/>
+                        </StackPanel>
+
+                        <DataGrid Grid.Row="1"
+                                 x:Name="WorkloadDocumentsDataGrid"
+                                 Style="{StaticResource DarkDataGridStyle}"
+                                 ClipToBounds="True">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource DarkDataGridColumnHeaderStyle}"/>
+                            </DataGrid.ColumnHeaderStyle>
+                            <DataGrid.CellStyle>
+                                <Style TargetType="DataGridCell" BasedOn="{StaticResource DarkDataGridCellStyle}"/>
+                            </DataGrid.CellStyle>
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource DarkDataGridRowStyle}"/>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Дата" Binding="{Binding GeneratedAt, StringFormat=dd.MM.yyyy HH:mm}" Width="150"/>
+                                <DataGridTextColumn Header="Программа" Binding="{Binding Program.Name}" Width="2*"/>
+                                <DataGridTextColumn Header="Слушатель" Binding="{Binding Listener.FullName}" Width="2*"/>
+                                <DataGridTextColumn Header="Группа" Binding="{Binding GroupName}" Width="*"/>
+                                <DataGridTextColumn Header="Преподаватель" Binding="{Binding Teacher.FullName}" Width="2*"/>
+                                <DataGridTextColumn Header="Файл" Binding="{Binding FileName}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+        </Grid>
+    </Grid>
+
+</ui:FluentWindow>
