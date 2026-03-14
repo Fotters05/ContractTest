@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -29,6 +30,30 @@ namespace Contract2512.Services
             var assembly = Assembly.GetExecutingAssembly();
             var version = assembly.GetName().Version;
             return $"{version?.Major}.{version?.Minor}.{version?.Build}";
+        }
+
+        /// <summary>
+        /// Проверяет является ли новая версия более новой чем текущая
+        /// </summary>
+        private bool IsNewerVersion(string newVersion, string currentVersion)
+        {
+            try
+            {
+                var newParts = newVersion.Split('.').Select(int.Parse).ToArray();
+                var currentParts = currentVersion.Split('.').Select(int.Parse).ToArray();
+
+                for (int i = 0; i < Math.Min(newParts.Length, currentParts.Length); i++)
+                {
+                    if (newParts[i] > currentParts[i]) return true;
+                    if (newParts[i] < currentParts[i]) return false;
+                }
+
+                return newParts.Length > currentParts.Length;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -152,21 +177,32 @@ namespace Contract2512.Services
                 // ExitCode 2+ = ошибка
                 if (process.ExitCode == 0)
                 {
-                    Debug.WriteLine($"✅ Найдено обновление!");
-
                     // Пытаемся извлечь версию из вывода
                     var versionMatch = Regex.Match(output, @"(\d+\.\d+\.\d+)");
-                    var newVersion = versionMatch.Success ? versionMatch.Groups[1].Value : "новая версия";
+                    var newVersion = versionMatch.Success ? versionMatch.Groups[1].Value : "";
 
-                    UpdateLogger.Log($"✅ ОБНОВЛЕНИЕ НАЙДЕНО! Новая версия: {newVersion}");
+                    UpdateLogger.Log($"Версия из вывода Update.exe: {newVersion}");
+                    UpdateLogger.Log($"Текущая версия: {_currentVersion}");
 
-                    return new UpdateInfo
+                    // Сравниваем версии
+                    if (!string.IsNullOrEmpty(newVersion) && newVersion != _currentVersion)
                     {
-                        HasUpdate = true,
-                        Version = newVersion,
-                        ReleaseNotes = "Доступна новая версия приложения",
-                        CurrentVersion = _currentVersion
-                    };
+                        // Дополнительная проверка: новая версия должна быть больше текущей
+                        if (IsNewerVersion(newVersion, _currentVersion))
+                        {
+                            UpdateLogger.Log($"✅ ОБНОВЛЕНИЕ НАЙДЕНО! Новая версия: {newVersion}");
+                            return new UpdateInfo
+                            {
+                                HasUpdate = true,
+                                Version = newVersion,
+                                ReleaseNotes = "Доступна новая версия приложения",
+                                CurrentVersion = _currentVersion
+                            };
+                        }
+                    }
+
+                    UpdateLogger.Log("ℹ️ У вас уже установлена последняя версия");
+                    return new UpdateInfo { HasUpdate = false, CurrentVersion = _currentVersion };
                 }
                 else if (process.ExitCode == 1)
                 {
