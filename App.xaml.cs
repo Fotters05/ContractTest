@@ -2,6 +2,8 @@
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Windows;
 using Contract2512.Services;
 using Contract2512.Views;
@@ -17,7 +19,7 @@ namespace Contract2512
         {
             base.OnStartup(e);
             
-            // Обрабатываем события Squirrel через Update.exe
+            // Обрабатываем события Squirrel через рефлексию
             HandleSquirrelEvents();
             
             // Проверяем и устанавливаем npm пакеты для парсера (если нужно)
@@ -49,47 +51,87 @@ namespace Contract2512
         }
 
         /// <summary>
-        /// Обрабатывает события Squirrel (установка, обновление, удаление)
+        /// Обрабатывает события Squirrel через рефлексию
         /// </summary>
         private void HandleSquirrelEvents()
         {
             try
             {
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
-                var updateExe = Path.Combine(appDir, "..", "Update.exe");
+                var squirrelDll = Path.Combine(appDir, "Clowd.Squirrel.dll");
                 
-                if (!File.Exists(updateExe))
+                if (!File.Exists(squirrelDll))
                 {
-                    Debug.WriteLine("⚠️ Update.exe не найден, пропускаем обработку Squirrel событий");
+                    Debug.WriteLine("⚠️ Clowd.Squirrel.dll не найден, пропускаем обработку Squirrel событий");
                     return;
                 }
 
-                var args = Environment.GetCommandLineArgs();
+                var assembly = Assembly.LoadFrom(squirrelDll);
+                var squirrelAwareAppType = assembly.GetType("Clowd.Squirrel.SquirrelAwareApp");
                 
-                // Проверяем аргументы командной строки для Squirrel событий
-                if (args.Length > 1)
+                if (squirrelAwareAppType == null)
                 {
-                    var arg = args[1];
-                    
-                    if (arg.Contains("squirrel-install") || arg.Contains("squirrel-updated"))
-                    {
-                        // Создаем ярлыки при установке/обновлении
-                        Process.Start(updateExe, "--createShortcut Contract2512.exe");
-                        Shutdown();
-                        return;
-                    }
-                    else if (arg.Contains("squirrel-uninstall"))
-                    {
-                        // Удаляем ярлыки при удалении
-                        Process.Start(updateExe, "--removeShortcut Contract2512.exe");
-                        Shutdown();
-                        return;
-                    }
+                    Debug.WriteLine("⚠️ SquirrelAwareApp не найден");
+                    return;
                 }
+
+                var handleEventsMethod = squirrelAwareAppType.GetMethod("HandleEvents", BindingFlags.Public | BindingFlags.Static);
+                
+                if (handleEventsMethod == null)
+                {
+                    Debug.WriteLine("⚠️ HandleEvents не найден");
+                    return;
+                }
+
+                // Создаем делегаты для событий
+                var actionType = typeof(Action<>).MakeGenericType(assembly.GetType("NuGet.Versioning.SemanticVersion")!);
+                
+                Delegate createShortcut = Delegate.CreateDelegate(actionType, this, GetType().GetMethod(nameof(CreateShortcut), BindingFlags.NonPublic | BindingFlags.Instance)!);
+                Delegate removeShortcut = Delegate.CreateDelegate(actionType, this, GetType().GetMethod(nameof(RemoveShortcut), BindingFlags.NonPublic | BindingFlags.Instance)!);
+
+                handleEventsMethod.Invoke(null, new object?[] { createShortcut, createShortcut, removeShortcut, null, null });
+                
+                Debug.WriteLine("✅ Squirrel события обработаны");
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ Ошибка обработки Squirrel событий: {ex.Message}");
+            }
+        }
+
+        private void CreateShortcut(object version)
+        {
+            try
+            {
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var squirrelDll = Path.Combine(appDir, "Clowd.Squirrel.dll");
+                var assembly = Assembly.LoadFrom(squirrelDll);
+                var squirrelAwareAppType = assembly.GetType("Clowd.Squirrel.SquirrelAwareApp");
+                var method = squirrelAwareAppType?.GetMethod("CreateShortcutForThisExe", BindingFlags.Public | BindingFlags.Static);
+                method?.Invoke(null, null);
+                Debug.WriteLine("✅ Ярлык создан");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Ошибка создания ярлыка: {ex.Message}");
+            }
+        }
+
+        private void RemoveShortcut(object version)
+        {
+            try
+            {
+                var appDir = AppDomain.CurrentDomain.BaseDirectory;
+                var squirrelDll = Path.Combine(appDir, "Clowd.Squirrel.dll");
+                var assembly = Assembly.LoadFrom(squirrelDll);
+                var squirrelAwareAppType = assembly.GetType("Clowd.Squirrel.SquirrelAwareApp");
+                var method = squirrelAwareAppType?.GetMethod("RemoveShortcutForThisExe", BindingFlags.Public | BindingFlags.Static);
+                method?.Invoke(null, null);
+                Debug.WriteLine("✅ Ярлык удален");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"❌ Ошибка удаления ярлыка: {ex.Message}");
             }
         }
 
