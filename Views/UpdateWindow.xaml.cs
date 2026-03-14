@@ -40,21 +40,18 @@ namespace Contract2512.Views
 
                 // Показываем прогресс
                 ProgressPanel.Visibility = Visibility.Visible;
-
-                // Прогресс скачивания
-                var progress = new Progress<int>(percent =>
-                {
-                    ProgressBar.Value = percent;
-                    ProgressText.Text = $"Скачивание обновления... {percent}%";
-                });
+                ProgressBar.IsIndeterminate = true; // Анимация загрузки
+                ProgressText.Text = "Скачивание обновления...";
 
                 // Скачиваем и устанавливаем через Squirrel
-                var success = await _updateService.DownloadAndInstallUpdateAsync(progress);
+                var success = await _updateService.DownloadAndInstallUpdateAsync();
 
                 if (success)
                 {
-                    ProgressText.Text = "Обновление установлено! Перезапуск приложения...";
-                    await System.Threading.Tasks.Task.Delay(1000);
+                    ProgressBar.IsIndeterminate = false;
+                    ProgressBar.Value = 100;
+                    ProgressText.Text = "Обновление установлено! Перезапуск...";
+                    await System.Threading.Tasks.Task.Delay(1500);
                     
                     // Перезапускаем приложение
                     AutoUpdateService.RestartApp();

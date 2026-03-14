@@ -11,21 +11,22 @@ public static class EnvConfigService
     public const string ConnectionStringKey = "DB_CONNECTION_STRING";
 
     /// <summary>
-    /// Возвращает путь к .env файлу в корне проекта
+    /// Возвращает путь к .env файлу
+    /// Для Squirrel-установки: %LocalAppData%\Contract2512\.env (сохраняется между обновлениями)
+    /// Для разработки: рядом с exe файлом
     /// </summary>
     public static string GetEnvFilePath()
     {
-        // Ищем корень проекта (где находится .csproj файл)
+        // Проверяем, запущено ли приложение из Squirrel установки
         var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        var parentDir = Directory.GetParent(baseDir)?.FullName;
         
-        // Поднимаемся вверх от bin/Debug/net8.0-windows/ к корню проекта
-        var projectRoot = FindProjectRoot(baseDir);
-        
-        if (projectRoot != null)
+        // Если это Squirrel установка (есть папка app-X.X.X), храним .env в родительской папке
+        if (parentDir != null && baseDir.Contains("app-") && File.Exists(Path.Combine(parentDir, "Update.exe")))
         {
-            var envPath = Path.Combine(projectRoot, ".env");
+            // Squirrel установка: храним в %LocalAppData%\Contract2512\.env
+            var envPath = Path.Combine(parentDir, ".env");
             
-            // Если .env не существует в корне, создаем его с дефолтными значениями
             if (!File.Exists(envPath))
             {
                 CreateDefaultEnvFile(envPath);
@@ -33,35 +34,14 @@ public static class EnvConfigService
             
             return envPath;
         }
-
-        // Fallback: если не нашли корень проекта, используем директорию exe
+        
+        // Разработка или обычный запуск: храним рядом с exe
         var fallbackPath = Path.Combine(baseDir, ".env");
         if (!File.Exists(fallbackPath))
         {
             CreateDefaultEnvFile(fallbackPath);
         }
         return fallbackPath;
-    }
-
-    /// <summary>
-    /// Ищет корень проекта (где находится .csproj файл)
-    /// </summary>
-    private static string? FindProjectRoot(string startPath)
-    {
-        var dir = new DirectoryInfo(startPath);
-        
-        while (dir != null)
-        {
-            // Проверяем наличие .csproj файла
-            if (dir.GetFiles("*.csproj").Length > 0)
-            {
-                return dir.FullName;
-            }
-            
-            dir = dir.Parent;
-        }
-        
-        return null;
     }
 
     /// <summary>
