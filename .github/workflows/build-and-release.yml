@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*.*.*'  # Триггер на теги типа v1.0.0, v1.1.0 и т.д.
+      - 'v*.*.*'
 
 jobs:
   build-and-release:
@@ -22,66 +22,24 @@ jobs:
         
     - name: Install Squirrel CLI
       run: |
-        # Скачиваем Squirrel CLI из NuGet пакета
         nuget install Clowd.Squirrel -Version 2.11.1 -OutputDirectory tools
-        # Добавляем в PATH
         $squirrelPath = (Get-ChildItem -Path "tools/Clowd.Squirrel.*/tools" -Recurse -Directory | Select-Object -First 1).FullName
         echo $squirrelPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       shell: pwsh
       
-    - name: Restore NuGet packages
+    - name: Restore and Build
       run: |
-        Write-Host "Restoring NuGet packages..." -ForegroundColor Cyan
-        dotnet restore Contract2512.csproj --verbosity detailed
-        
-        Write-Host "Checking Clowd.Squirrel package..." -ForegroundColor Cyan
-        $packagePath = "$env:USERPROFILE\.nuget\packages\clowd.squirrel"
-        if (Test-Path $packagePath) {
-          Write-Host "✅ Clowd.Squirrel found at: $packagePath" -ForegroundColor Green
-          Get-ChildItem $packagePath -Recurse -Filter "*.dll" | Select-Object -First 5 | ForEach-Object { Write-Host "  - $($_.FullName)" }
-        } else {
-          Write-Host "❌ Clowd.Squirrel NOT found, installing explicitly..." -ForegroundColor Red
-          dotnet add Contract2512.csproj package Clowd.Squirrel --version 2.11.1
-          dotnet restore Contract2512.csproj --force
-        }
-      shell: pwsh
-      
-    - name: Verify packages before build
-      run: |
-        Write-Host "Verifying project references..." -ForegroundColor Cyan
-        dotnet list Contract2512.csproj package | Select-String "Clowd.Squirrel"
-        
-        Write-Host "Checking obj folder..." -ForegroundColor Cyan
-        if (Test-Path "obj/project.assets.json") {
-          $assets = Get-Content "obj/project.assets.json" | ConvertFrom-Json
-          if ($assets.libraries."Clowd.Squirrel/2.11.1") {
-            Write-Host "✅ Clowd.Squirrel found in project.assets.json" -ForegroundColor Green
-          } else {
-            Write-Host "❌ Clowd.Squirrel NOT in project.assets.json" -ForegroundColor Red
-            Write-Host "Available packages:" -ForegroundColor Yellow
-            $assets.libraries.PSObject.Properties.Name | Where-Object { $_ -like "*Squirrel*" }
-          }
-        }
+        dotnet restore Contract2512.csproj
+        dotnet build Contract2512.csproj -c Release
+        dotnet publish Contract2512.csproj -c Release -o bin/Release/net8.0-windows/publish --no-build
       shell: pwsh
       
     - name: Create .env file
       run: |
         @"
-        # GitHub Auto-Update Settings
         GITHUB_OWNER=Fotters05
-        GITHUB_REPO=contracts2512
-        "@ | Out-File -FilePath .env -Encoding UTF8
-      shell: pwsh
-      
-    - name: Build and Publish
-      run: |
-        Write-Host "Building project..." -ForegroundColor Cyan
-        # Собираем проект для Release
-        dotnet build Contract2512.csproj -c Release
-        
-        Write-Host "Publishing project..." -ForegroundColor Cyan
-        # Публикуем без указания runtime (используем framework-dependent)
-        dotnet publish Contract2512.csproj -c Release -o bin/Release/net8.0-windows/publish --no-build
+        GITHUB_REPO=ContractTest
+        "@ | Out-File -FilePath bin/Release/net8.0-windows/publish/.env -Encoding UTF8
       shell: pwsh
       
     - name: Get version from tag
@@ -93,7 +51,6 @@ jobs:
       
     - name: Create Squirrel Release
       run: |
-        # Находим squirrel.exe
         $squirrelExe = Get-ChildItem -Path "tools" -Filter "squirrel.exe" -Recurse | Select-Object -First 1
         & $squirrelExe.FullName pack `
           --packId Contract2512 `
@@ -104,12 +61,6 @@ jobs:
           --appIcon progaico.ico `
           --splashImage splash.png `
           --allowUnaware
-      shell: pwsh
-      
-    - name: List created files
-      run: |
-        Write-Host "Содержимое папки releases:" -ForegroundColor Cyan
-        Get-ChildItem -Path releases -Recurse | Format-Table Name, Length
       shell: pwsh
       
     - name: Create GitHub Release
@@ -129,11 +80,6 @@ jobs:
           
           ### Обновление:
           Если у вас уже установлена предыдущая версия - просто запустите приложение, оно автоматически предложит обновиться.
-          
-          ### Что нового:
-          - Настроена система автоматического обновления
-          - Улучшения производительности
-          - Исправления ошибок
         draft: false
         prerelease: false
       env:
