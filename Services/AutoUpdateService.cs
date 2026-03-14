@@ -315,36 +315,51 @@ namespace Contract2512.Services
             {
                 Debug.WriteLine($"🔄 Перезапуск приложения...");
 
-                // Получаем путь к Update.exe
+                // Получаем путь к главному exe в родительской папке
                 var appDir = AppDomain.CurrentDomain.BaseDirectory;
                 var parentDir = Directory.GetParent(appDir)?.FullName;
-                if (parentDir == null) return;
-
-                var updateExe = Path.Combine(parentDir, "Update.exe");
-                if (!File.Exists(updateExe))
+                if (parentDir == null)
                 {
-                    Debug.WriteLine($"⚠️ Update.exe не найден для перезапуска");
+                    Debug.WriteLine($"⚠️ Не удалось получить родительскую папку");
                     return;
                 }
 
-                // Запускаем Update.exe --processStart Contract2512.exe
+                var mainExe = Path.Combine(parentDir, "Contract2512.exe");
+                if (!File.Exists(mainExe))
+                {
+                    Debug.WriteLine($"⚠️ Главный exe не найден: {mainExe}");
+                    return;
+                }
+
+                Debug.WriteLine($"✅ Запускаем: {mainExe}");
+
+                // Запускаем новый экземпляр приложения
                 var startInfo = new ProcessStartInfo
                 {
-                    FileName = updateExe,
-                    Arguments = "--processStart Contract2512.exe",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
+                    FileName = mainExe,
+                    UseShellExecute = true,
+                    WorkingDirectory = parentDir
                 };
 
                 Process.Start(startInfo);
-                Debug.WriteLine($"✅ Команда перезапуска отправлена");
+                Debug.WriteLine($"✅ Новый экземпляр запущен");
+
+                // Даем время на запуск нового процесса
+                System.Threading.Thread.Sleep(500);
 
                 // Закрываем текущее приложение
-                System.Windows.Application.Current.Shutdown();
+                Environment.Exit(0);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"❌ Ошибка перезапуска: {ex.Message}");
+                
+                // Fallback: просто закрываем приложение
+                try
+                {
+                    System.Windows.Application.Current.Shutdown();
+                }
+                catch { }
             }
         }
     }

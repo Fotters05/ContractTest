@@ -27,9 +27,47 @@ public static class EnvConfigService
             // Squirrel установка: храним в %LocalAppData%\Contract2512\.env
             var envPath = Path.Combine(parentDir, ".env");
             
+            // Миграция: если .env нет в родительской папке, но есть в текущей app-X.X.X
             if (!File.Exists(envPath))
             {
-                CreateDefaultEnvFile(envPath);
+                var oldEnvPath = Path.Combine(baseDir, ".env");
+                if (File.Exists(oldEnvPath))
+                {
+                    // Копируем старый .env в родительскую папку
+                    try
+                    {
+                        File.Copy(oldEnvPath, envPath, overwrite: false);
+                    }
+                    catch
+                    {
+                        // Если не удалось скопировать, создаем новый
+                        CreateDefaultEnvFile(envPath);
+                    }
+                }
+                else
+                {
+                    // Проверяем другие версии app-X.X.X
+                    var appDirs = Directory.GetDirectories(parentDir, "app-*");
+                    foreach (var appDir in appDirs)
+                    {
+                        var oldEnv = Path.Combine(appDir, ".env");
+                        if (File.Exists(oldEnv))
+                        {
+                            try
+                            {
+                                File.Copy(oldEnv, envPath, overwrite: false);
+                                break;
+                            }
+                            catch { }
+                        }
+                    }
+                    
+                    // Если так и не нашли, создаем новый
+                    if (!File.Exists(envPath))
+                    {
+                        CreateDefaultEnvFile(envPath);
+                    }
+                }
             }
             
             return envPath;
