@@ -206,8 +206,14 @@ namespace Contract2512
                 
                 System.Diagnostics.Debug.WriteLine($"🔍 Проверка обновлений по URL: {updateUrl}");
                 
+                // ВРЕМЕННО: показываем MessageBox для отладки
+                MessageBox.Show($"Начинаем проверку обновлений...\nURL: {updateUrl}", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
+                
                 var updateService = new AutoUpdateService(updateUrl);
                 var updateInfo = await updateService.CheckForUpdatesAsync();
+
+                // ВРЕМЕННО: показываем результат
+                MessageBox.Show($"Результат проверки:\nHasUpdate: {updateInfo.HasUpdate}\nVersion: {updateInfo.Version}\nError: {updateInfo.Error}", "Debug", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 if (updateInfo.HasUpdate)
                 {
@@ -233,6 +239,9 @@ namespace Contract2512
             {
                 // Ошибки обновления не должны ломать приложение
                 System.Diagnostics.Debug.WriteLine($"❌ Ошибка проверки обновлений: {ex.Message}");
+                
+                // ВРЕМЕННО: показываем ошибку
+                MessageBox.Show($"Ошибка проверки обновлений:\n{ex.Message}\n\nStack:\n{ex.StackTrace}", "Debug Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
