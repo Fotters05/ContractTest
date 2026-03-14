@@ -29,8 +29,15 @@ jobs:
         echo $squirrelPath | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       shell: pwsh
       
-    - name: Restore dependencies
-      run: dotnet restore Contract2512.csproj
+    - name: Restore NuGet packages
+      run: |
+        dotnet restore Contract2512.csproj
+        # Проверяем, что пакет Clowd.Squirrel восстановлен
+        if (!(Test-Path "$env:USERPROFILE\.nuget\packages\clowd.squirrel")) {
+          Write-Host "Installing Clowd.Squirrel package..." -ForegroundColor Yellow
+          dotnet add Contract2512.csproj package Clowd.Squirrel -v 2.11.1
+        }
+      shell: pwsh
       
     - name: Create .env file
       run: |
