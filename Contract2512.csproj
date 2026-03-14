@@ -8,9 +8,9 @@
     <UseWPF>true</UseWPF>
     
     <!-- Version info for auto-update -->
-    <Version>1.3.1</Version>
-    <AssemblyVersion>1.3.1.0</AssemblyVersion>
-    <FileVersion>1.3.1.0</FileVersion>
+    <Version>1.3.2</Version>
+    <AssemblyVersion>1.3.2.0</AssemblyVersion>
+    <FileVersion>1.3.2.0</FileVersion>
     
     <!-- Disable temporary WPF assembly generation - CRITICAL for Squirrel -->
     <GenerateTemporaryTargetAssembly>false</GenerateTemporaryTargetAssembly>
@@ -34,10 +34,9 @@
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
     <PackageReference Include="WPF-UI" Version="4.1.0" />
     
-    <!-- Auto-update via Clowd.Squirrel - только для runtime -->
+    <!-- Auto-update via Clowd.Squirrel - копируем DLL в output -->
     <PackageReference Include="Clowd.Squirrel" Version="2.11.1">
-      <PrivateAssets>none</PrivateAssets>
-      <ExcludeAssets>compile</ExcludeAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
 
