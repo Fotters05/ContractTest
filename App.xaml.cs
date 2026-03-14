@@ -1,9 +1,9 @@
 ﻿using System.Configuration;
 using System.Data;
-using System.Reflection;
 using System.Windows;
 using Contract2512.Services;
 using Contract2512.Views;
+using Clowd.Squirrel;
 
 namespace Contract2512
 {
@@ -17,7 +17,11 @@ namespace Contract2512
             base.OnStartup(e);
             
             // Обрабатываем события Squirrel (установка, обновление, удаление)
-            HandleSquirrelEvents();
+            SquirrelAwareApp.HandleEvents(
+                onInitialInstall: v => SquirrelAwareApp.CreateShortcutForThisExe(),
+                onAppUpdate: v => SquirrelAwareApp.CreateShortcutForThisExe(),
+                onAppUninstall: v => SquirrelAwareApp.RemoveShortcutForThisExe()
+            );
             
             // Проверяем и устанавливаем npm пакеты для парсера (если нужно)
             await CheckAndInstallNodePackagesAsync();
@@ -45,24 +49,6 @@ namespace Contract2512
 
             // Проверяем обновления (в фоновом режиме, не блокируем запуск)
             _ = CheckForUpdatesAsync();
-        }
-
-        /// <summary>
-        /// Обрабатывает события Squirrel (установка, обновление, удаление)
-        /// </summary>
-        private void HandleSquirrelEvents()
-        {
-            try
-            {
-                var assembly = Assembly.Load("Clowd.Squirrel");
-                var type = assembly.GetType("Clowd.Squirrel.SquirrelAwareApp");
-                var method = type?.GetMethod("HandleEvents", BindingFlags.Public | BindingFlags.Static);
-                method?.Invoke(null, new object?[] { null, null, null, null, null });
-            }
-            catch
-            {
-                // Игнорируем ошибки Squirrel
-            }
         }
 
         /// <summary>
