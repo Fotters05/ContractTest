@@ -99,13 +99,13 @@ namespace Contract2512.Services
                 }
 
                 UpdateLogger.Log($"✅ Update.exe найден: {updateExe}");
-                UpdateLogger.Log($"Команда: {updateExe} --checkForUpdate --url \"{_updateUrl}\"");
+                UpdateLogger.Log($"Команда: {updateExe} --checkForUpdate=\"{_updateUrl}\"");
 
-                // Запускаем Update.exe --checkForUpdate --url <updateUrl>
+                // Запускаем Update.exe --checkForUpdate="URL"
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = updateExe,
-                    Arguments = $"--checkForUpdate --url \"{_updateUrl}\"",
+                    Arguments = $"--checkForUpdate=\"{_updateUrl}\"",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -208,11 +208,11 @@ namespace Contract2512.Services
                 Debug.WriteLine($"✅ Update.exe найден: {updateExe}");
                 Debug.WriteLine($"🔄 Запускаем установку обновления...");
 
-                // Запускаем Update.exe --update <updateUrl>
+                // Запускаем Update.exe --update="URL"
                 var startInfo = new ProcessStartInfo
                 {
                     FileName = updateExe,
-                    Arguments = $"--update \"{_updateUrl}\"",
+                    Arguments = $"--update=\"{_updateUrl}\"",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
